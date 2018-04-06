@@ -1,0 +1,135 @@
+#overview_config {
+  background: #0069c0;
+  padding: 0 50px 1.5rem 50px;
+  position: relative;
+}
+
+#overview_config .section_label {
+  color: white;
+}
+
+#view_options_dropdown {
+  position: relative;
+}
+
+#view_options_dropdown .dropdown {
+  width: 136px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  background: white;
+  transform: scale(0);
+  transform-origin: top left;
+  transition: all 0.15s;
+  box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
+#view_options_dropdown .dropdown.open {
+  transform: scale(1);
+  opacity: 1;
+  z-index: 1;
+}
+
+.view_options_selected {
+  width: 136px;
+  line-height: 3rem;
+  height: 3rem;
+  padding: 0;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid white;
+  color: white;
+}
+
+.view_options_selected i {
+  float: right;
+  line-height: 3rem;
+}
+
+#view_options_dropdown .dropdown_options {
+  margin: 0;
+}
+
+#view_options_dropdown .dropdown_options .view_option .option_text {
+  width: 100%;
+  padding: 0 1rem;
+  line-height: 3rem;
+  text-align: left;
+  background: transparent;
+  border: none;
+}
+
+#view_options_dropdown .dropdown_options .view_option .option_text i {
+  float: right;
+  line-height: 3rem;
+  font-size: 1rem;
+}
+
+#view_options_dropdown .dropdown_options .view_option .option_text:hover {
+  background: rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+#view_options_dropdown .dropdown_options .view_option .option_text:focus {
+  background: transparent;
+  border: none;
+}
+
+#overview_stats {
+  width: 100%;
+  background-color: #2196f3;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
+#overview_stats .inner {
+  padding: 1rem 25px 0 50px;
+  max-width: 940px;
+  margin: auto;
+}
+
+#overview_stats ul {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+#overview_stats ul li {
+  margin: 0 25px 1rem 0;
+}
+
+.overview_stat {
+  color: #bbdefb;
+}
+
+.overview_stat .stat_label {
+  font-size: 0.8rem;
+}
+
+.overview_stat .stat_value {
+  color: white;
+  font-size: 1.2rem;
+  white-space: nowrap;
+}
+
+.overview_stat .stat_subtitle {
+  font-size: 0.8rem;
+}
+
+.overview_stat i {
+  font-size: 1rem;
+}
+
+.overview_stat.text_value .stat_value {
+  font-size: 1.1rem !important;
+  white-space: initial !important;
+}
+
+#overview_stats ul:last-of-type {
+  margin-bottom: 0.5rem;
+}
