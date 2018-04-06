@@ -14,12 +14,7 @@ import {
   extract_this_week,
   extract_this_month,
   extract_this_year,
-  extract_range,
-  extract_items_from_snapshot,
-  get_today_start_date,
-  get_this_week_start_date,
-  get_this_month_start_date,
-  get_this_year_start_date
+  extract_range
 } from "./util";
 
 class Overview extends Component {
@@ -28,18 +23,14 @@ class Overview extends Component {
 
     scroll_viewport_to_top();
 
-    this.set_display = this.set_display.bind(this);
-
     this.state = {
       nav: false,
       selected_view_option: this.view_options[0],
       view_options_dropdown_is_open: false,
-      selected_start_date: null,
-      selected_end_date: null,
+      start_date: null,
+      end_date: null,
       display_log: null
     };
-
-    this.set_display(resolve_display_params({ view_option: this.state.selected_view_option }));
   }
 
   view_options = [
@@ -64,31 +55,6 @@ class Overview extends Component {
       display_text: "Date Range"
     }
   ];
-
-  set_display = ({ view_option, start_date, end_date }) => {
-    const db = this.props.db;
-    const log_ref = db.ref("log");
-    const query = end_date
-      ? log_ref
-          .orderByChild("date")
-          .startAt(start_date)
-          .endAt(end_date)
-      : log_ref.orderByChild("date").startAt(start_date);
-
-    // detach any old callbacks
-    log_ref.off("value");
-
-    query.on("value", snapshot => {
-      const display_log = extract_items_from_snapshot(snapshot).filter(l => l.active !== false);
-
-      this.setState({
-        ...this.state,
-        selected_view_option: view_option,
-        view_options_dropdown_is_open: false,
-        display_log
-      });
-    });
-  };
 
   nav_open_handler = e => {
     e.preventDefault();
@@ -122,10 +88,33 @@ class Overview extends Component {
   view_option_select_handler = view_option => e => {
     e.preventDefault();
 
-    const { selected_start_date, selected_end_date } = this.state;
+    const { active_log } = this.props;
+    const { start_date, end_date } = this.state;
+    const display_log = resolve_display_log({
+      selected_view_option: view_option,
+      active_log,
+      start_date,
+      end_date
+    });
 
-    this.set_display(resolve_display_params({ view_option, selected_start_date, selected_end_date }));
+    this.setState({
+      ...this.state,
+      selected_view_option: view_option,
+      view_options_dropdown_is_open: false,
+      display_log
+    });
   };
+
+  static getDerivedStateFromProps(nextProps, prevState) {
+    const { active_log } = nextProps;
+    const { selected_view_option, start_date, end_date } = prevState;
+    const display_log = resolve_display_log({ active_log, selected_view_option, start_date, end_date });
+
+    return {
+      ...prevState,
+      display_log
+    };
+  }
 
   render() {
     const { active_log, score, today_score } = this.props;
@@ -285,45 +274,6 @@ const resolve_display_log = ({ selected_view_option, start_date, end_date, activ
       return active_log ? extract_this_year(active_log) : null;
     case "range":
       return active_log ? extract_range({ start: start_date, end: end_date, log: active_log }) : null;
-    default:
-      return null;
-  }
-};
-
-const resolve_display_params = ({ view_option, selected_start_date, selected_end_date }) => {
-  const week_start_day = "monday";
-
-  switch (view_option.value) {
-    case "day":
-      return {
-        view_option,
-        start_date: get_today_start_date().getTime(),
-        end_date: null
-      };
-    case "week":
-      return {
-        view_option,
-        start_date: get_this_week_start_date(week_start_day).getTime(),
-        end_date: null
-      };
-    case "month":
-      return {
-        view_option,
-        start_date: get_this_month_start_date().getTime(),
-        end_date: null
-      };
-    case "year":
-      return {
-        view_option,
-        start_date: get_this_year_start_date().getTime(),
-        end_date: null
-      };
-    case "range":
-      return {
-        view_option,
-        start_date: selected_start_date,
-        end_date: selected_end_date
-      };
     default:
       return null;
   }
