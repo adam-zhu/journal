@@ -245,6 +245,21 @@ class Overview extends Component {
       });
     }
   }
+
+  componentDidMount() {
+    const { display_log, selected_view_option } = this.state;
+    const el_calendar_container = document.getElementById('overview_calendar_chart');
+    const el_line_container = document.getElementById('overview_line_chart');
+    const el_pie_container = document.getElementById('overview_pie_chart');
+
+    render_charts({
+      display_log,
+      view_option: selected_view_option,
+      el_calendar_container,
+      el_line_container,
+      el_pie_container
+    });
+  }
 }
 
 export default Overview;
