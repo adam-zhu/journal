@@ -22,7 +22,8 @@
   transform: scale(0);
   transform-origin: top left;
   transition: all 0.15s;
-  box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12),
+    0 2px 4px -1px rgba(0, 0, 0, 0.3);
 }
 
 #view_options_dropdown .dropdown.open {
@@ -82,13 +83,30 @@
   background-color: #2196f3;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12),
+    0 2px 4px -1px rgba(0, 0, 0, 0.3);
 }
 
 #overview_stats .inner {
   padding: 1rem 25px 0 50px;
   max-width: 940px;
   margin: auto;
+}
+
+#overview_stats_title {
+  color: white;
+  display: inline-block;
+  width: calc(100% - 25px);
+  font-weight: normal;
+  margin: 0 0 0.8rem 0;
+  text-align: left;
+  font-size: 1.4rem;
+}
+
+#overview_stats_title span {
+  display: inline-block;
+  line-height: 1.5rem;
+  font-size: 1.2rem;
 }
 
 #overview_stats ul {

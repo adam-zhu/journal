@@ -1,7 +1,8 @@
-import React, { Component } from "react";
-import Header from "./Header";
-import Nav from "./Nav";
-import { Link } from "react-router-dom";
+import React, { Component } from 'react';
+import Header from './Header';
+import Nav from './Nav';
+import { Link } from 'react-router-dom';
+import { deactivate_entry } from './db_actions';
 import {
   time_ago,
   format_date_full,
@@ -10,7 +11,7 @@ import {
   get_daily_item_average,
   map_to_calendar_chart_data,
   scroll_viewport_to_top
-} from "./util";
+} from './util';
 
 class Entry extends Component {
   constructor(props) {
@@ -56,14 +57,14 @@ class Entry extends Component {
 
   deactivate_handler = entry => e => {
     const el_form = e.target;
-    const deactivate_entry = () => this.props.db.ref(`log/${entry.key}`).set({ ...entry, active: false });
-    const redirect_to_home = () => this.props.history.push("/journal");
 
     e.preventDefault();
 
     if (window.confirm(`Delete this entry?`)) {
+      const deactivate = deactivate_entry(this.props.db);
+      const redirect_to_home = () => this.props.history.push('/journal');
       disable_form(el_form)
-        .then(deactivate_entry)
+        .then(deactivate(entry.key))
         .then(redirect_to_home)
         .catch(alert);
     }
@@ -82,16 +83,35 @@ class Entry extends Component {
 
   render() {
     const { nav, entry, header_actions_is_open } = this.state;
-    const { nav_open_handler, nav_close_handler, header_actions_menu_toggler, deactivate_handler } = this;
+    const {
+      nav_open_handler,
+      nav_close_handler,
+      header_actions_menu_toggler,
+      deactivate_handler
+    } = this;
     const stats = [
       {
-        label: "logged",
-        value: entry === null ? <span className="loader stat" /> : entry === undefined ? "n/a" : time_ago(entry.date),
-        css_class: "text_value"
+        label: 'logged',
+        value:
+          entry === null ? (
+            <span className="loader stat" />
+          ) : entry === undefined ? (
+            'n/a'
+          ) : (
+            time_ago(entry.date)
+          ),
+        css_class: 'text_value'
       },
       {
-        label: "value",
-        value: entry === null ? <span className="loader stat" /> : entry === undefined ? "n/a" : entry.item.value
+        label: 'value',
+        value:
+          entry === null ? (
+            <span className="loader stat" />
+          ) : entry === undefined ? (
+            'n/a'
+          ) : (
+            entry.item.value
+          )
       }
     ];
     const el_header_actions_dropdown = (
@@ -114,14 +134,14 @@ class Entry extends Component {
     };
 
     return (
-      <div id="container" className={`${nav ? "nav_open" : ""}`}>
+      <div id="container" className={`${nav ? 'nav_open' : ''}`}>
         <Header
-          title={"Entry Details"}
+          title={'Entry Details'}
           subtitle={
             entry === null ? (
               <span className="loader stat" />
             ) : entry === undefined ? (
-              "entry not found"
+              'entry not found'
             ) : (
               entry.item.name
             )
@@ -129,14 +149,14 @@ class Entry extends Component {
           stats={stats}
           nav_open_handler={nav_open_handler}
           el_right_side_anchor={
-            <Link to={"/journal"}>
+            <Link to={'/journal'}>
               <i className="material-icons">home</i>
             </Link>
           }
           actions={header_actions}
         />
-        <Nav open={nav} active={"home"} nav_close_handler={nav_close_handler} />
-        <div id="overlay" className={nav ? "visible" : ""} onClick={nav_close_handler} />
+        <Nav open={nav} active={'home'} nav_close_handler={nav_close_handler} />
+        <div id="overlay" className={nav ? 'visible' : ''} onClick={nav_close_handler} />
         {entry ? (
           <div className="entry_details">
             <ul>
@@ -148,7 +168,9 @@ class Entry extends Component {
               </li>
               <li className="detail">
                 <label className="section_label">Value</label>
-                <span className={entry.item.value > 0 ? "positive" : "negative"}>{entry.item.value}</span>
+                <span className={entry.item.value > 0 ? 'positive' : 'negative'}>
+                  {entry.item.value}
+                </span>
               </li>
               <li className="detail">
                 <label className="section_label">Date</label>

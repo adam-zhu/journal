@@ -14,7 +14,7 @@ const extract_items_from_snapshot = snapshot => {
 };
 
 const extract_day = (day, log) => {
-  if (typeof day !== "object") {
+  if (typeof day !== 'object') {
     day = new Date(day);
   }
 
@@ -30,7 +30,7 @@ const extract_this_week = (week_start, log) => {
   const current_weekday_date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const sunday_start_weekday_index = now.getDay();
   const weekday_index =
-    week_start && week_start === "sunday"
+    week_start && week_start === 'sunday'
       ? sunday_start_weekday_index
       : sunday_start_weekday_index === 0 ? 6 : sunday_start_weekday_index - 1;
   const day_interval = 1000 * 60 * 60 * 24;
@@ -54,21 +54,22 @@ const extract_this_year = log => {
 };
 
 const extract_range = ({ start, end, log }) => {
-  if (typeof start !== "object") {
+  if (typeof start !== 'object') {
     start = new Date(start);
   }
 
-  if (typeof end !== "object") {
+  if (typeof end !== 'object') {
     end = new Date(end);
   }
 
   return log.filter(l => start <= l.date && l.date < end);
 };
 
-const disable_form = el_form => Promise.resolve(el_form.childNodes.forEach(el => (el.disabled = true)));
+const disable_form = el_form =>
+  Promise.resolve(el_form.childNodes.forEach(el => (el.disabled = true)));
 
 const time_ago = date => {
-  if (typeof date !== "object") {
+  if (typeof date !== 'object') {
     date = new Date(date);
   }
 
@@ -100,40 +101,48 @@ const time_ago = date => {
     return hour_interval === 1 ? `an hour ago` : `${hour_interval} hours ago`;
   } else if (minute_interval >= 1) {
     if (minute_interval === 1) {
-      return "a minute ago";
+      return 'a minute ago';
     } else if (minute_interval < 5) {
-      return "a few minutes ago";
+      return 'a few minutes ago';
     } else {
       return `${minute_interval} minutes ago`;
     }
   } else if (dt_now_seconds < 15) {
-    return "just now";
+    return 'just now';
   } else if (dt_now_seconds < 30) {
-    return "a few seconds ago";
+    return 'a few seconds ago';
   } else {
     return `${dt_now_seconds} seconds ago`;
   }
 };
 
 const format_date_full = date => {
-  if (typeof date !== "object") {
+  if (typeof date !== 'object') {
     date = new Date(date);
   }
 
-  const days_of_the_week = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const days_of_the_week = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday'
+  ];
   const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December"
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
   ];
   const weekday_index = date.getDay();
   const day = date.getDate();
@@ -144,22 +153,22 @@ const format_date_full = date => {
 };
 
 const format_time_of_day = date => {
-  if (typeof date !== "object") {
+  if (typeof date !== 'object') {
     date = new Date(date);
   }
   const hour = date.getHours();
   const minute = date.getMinutes();
 
   let hour_12 = hour;
-  let am_pm = "AM";
+  let am_pm = 'AM';
   if (hour > 12) {
     hour_12 -= 12;
-    am_pm = "PM";
+    am_pm = 'PM';
   } else if (hour === 0) {
     hour_12 = 12;
   }
 
-  return `${hour_12}:${minute < 10 ? "0" + minute : minute} ${am_pm}`;
+  return `${hour_12}:${minute < 10 ? '0' + minute : minute} ${am_pm}`;
 };
 
 const by_name_asc = (a, b) => {
@@ -225,6 +234,8 @@ const by_last_logged_date_desc = (a, b) => {
   return 0;
 };
 
+const get_average = log => log.reduce((acc, l) => acc + l.item.value, 0) / log.length;
+
 const get_daily_log_average = log => {
   const ms_per_day = 1000 * 60 * 60 * 24;
   const first_date = new Date(log[0].date);
@@ -232,18 +243,177 @@ const get_daily_log_average = log => {
   const first_day = new Date(first_date.getFullYear(), first_date.getMonth(), first_date.getDate());
   const last_day = new Date(last_date.getFullYear(), last_date.getMonth(), last_date.getDate());
   const diff_in_days = (last_day.getTime() - first_day.getTime()) / ms_per_day + 1;
-  const day_chunks = Array.apply(null, Array(diff_in_days)).map(function(_, i) {
+  const day_start_times = Array.apply(null, Array(diff_in_days)).map(function(_, i) {
     return first_day.getTime() + i * ms_per_day;
   });
-  const daily_totals = day_chunks.reduce((acc, day_chunk) => {
-    const next_day_chunk = day_chunk + ms_per_day;
-    const this_day_entries = log.filter(l => day_chunk <= l.date && l.date < next_day_chunk);
-    const this_day_score = this_day_entries.reduce((acc, l) => acc + l.item.value, 0);
+  const daily_totals = day_start_times.reduce((acc, day_start_time) => {
+    const next_day_start_time = day_start_time + ms_per_day;
+    const day_entries = log.filter(l => day_start_time <= l.date && l.date < next_day_start_time);
+    const day_score = day_entries.reduce((acc, l) => acc + l.item.value, 0);
 
-    return acc.concat([{ date: new Date(day_chunk), total: this_day_score }]);
+    return acc.concat([{ date: new Date(day_start_time), total: day_score }]);
   }, []);
 
   return Math.floor(daily_totals.reduce((acc, t) => acc + t.total, 0) / daily_totals.length);
+};
+
+const get_weekly_log_average = (week_start, log) => {
+  const ms_per_day = 1000 * 60 * 60 * 24;
+  const ms_per_week = ms_per_day * 7;
+
+  const first_date = new Date(log[0].date);
+  const first_weekday_date = new Date(
+    first_date.getFullYear(),
+    first_date.getMonth(),
+    first_date.getDate()
+  );
+  const first_sunday_start_weekday_index = first_weekday_date.getDay();
+  const first_weekday_index =
+    week_start && week_start === 'sunday'
+      ? first_sunday_start_weekday_index
+      : first_sunday_start_weekday_index === 0 ? 6 : first_sunday_start_weekday_index - 1;
+  const first_week_start_time = first_weekday_date.getTime() - first_weekday_index * ms_per_day;
+
+  const now = new Date(Date.now());
+  const current_weekday_date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const current_sunday_start_weekday_index = now.getDay();
+  const current_weekday_index =
+    week_start && week_start === 'sunday'
+      ? current_sunday_start_weekday_index
+      : current_sunday_start_weekday_index === 0 ? 6 : current_sunday_start_weekday_index - 1;
+  const current_week_end_time =
+    current_weekday_date.getTime() + (7 - current_weekday_index) * ms_per_day;
+
+  const diff_in_weeks = (current_week_end_time - first_week_start_time) / ms_per_week;
+  const week_start_dates = Array.apply(null, Array(diff_in_weeks)).map(function(_, i) {
+    return first_week_start_time + i * ms_per_week;
+  });
+
+  const weekly_totals = week_start_dates.reduce((acc, week_start_date) => {
+    const next_week_start_date = week_start_date + ms_per_week;
+    const week_entries = log.filter(
+      l => week_start_date <= l.date && l.date < next_week_start_date
+    );
+    const week_score = week_entries.reduce((acc, l) => acc + l.item.value, 0);
+
+    return acc.concat([{ date: new Date(week_start_date), total: week_score }]);
+  }, []);
+
+  return Math.floor(weekly_totals.reduce((acc, t) => acc + t.total, 0) / weekly_totals.length);
+};
+
+const get_monthly_log_average = log => {
+  const first_date = new Date(log[0].date);
+  const first_year = first_date.getFullYear();
+  const year_chunks = log.reduce(
+    (acc, l) => {
+      const this_year = new Date(l.date).getFullYear();
+      const current_chunk = acc[acc.length - 1];
+      const previous_entry = current_chunk ? current_chunk[current_chunk.length - 1] : null;
+      const current_chunk_year = previous_entry
+        ? new Date(previous_entry.date).getFullYear()
+        : null;
+
+      if (this_year > first_year && current_chunk_year) {
+        if (this_year > current_chunk_year) {
+          const next_chunk = [l];
+
+          return acc.concat([next_chunk]);
+        } else {
+          let updated_acc = acc.slice();
+
+          updated_acc[updated_acc.length - 1] = current_chunk.concat(l);
+
+          return updated_acc;
+        }
+      } else {
+        const updated_acc = [current_chunk.concat(l)];
+
+        return updated_acc;
+      }
+    },
+    [[]]
+  );
+  const month_chunks = year_chunks.reduce((acc, year_chunk) => {
+    const first_month = new Date(year_chunk[0].date).getMonth();
+    const month_chunks = year_chunk.reduce(
+      (yacc, l) => {
+        const this_month = new Date(l.date).getMonth();
+        const current_chunk = yacc[yacc.length - 1];
+        const previous_entry = current_chunk ? current_chunk[current_chunk.length - 1] : null;
+        const current_chunk_month = previous_entry
+          ? new Date(previous_entry.date).getMonth()
+          : null;
+
+        if (this_month > first_month && current_chunk_month) {
+          if (this_month > current_chunk_month) {
+            const next_chunk = [l];
+
+            return yacc.concat([next_chunk]);
+          } else {
+            let updated_yacc = yacc.slice();
+
+            updated_yacc[updated_yacc.length - 1] = current_chunk.concat(l);
+
+            return updated_yacc;
+          }
+        } else {
+          const updated_yacc = [current_chunk.concat(l)];
+
+          return updated_yacc;
+        }
+      },
+      [[]]
+    );
+
+    return acc.concat(month_chunks);
+  }, []);
+  const month_totals = month_chunks.reduce((acc, m) => {
+    const month_total = m.reduce((macc, l) => macc + l.item.value, 0);
+    return acc.concat(month_total);
+  }, []);
+
+  return Math.floor(month_totals.reduce((acc, t) => acc + t, 0) / month_totals.length);
+};
+
+const get_yearly_log_average = log => {
+  const first_date = new Date(log[0].date);
+  const first_year = first_date.getFullYear();
+  const year_chunks = log.reduce(
+    (acc, l) => {
+      const this_year = new Date(l.date).getFullYear();
+      const current_chunk = acc[acc.length - 1];
+      const previous_entry = current_chunk ? current_chunk[current_chunk.length - 1] : null;
+      const current_chunk_year = previous_entry
+        ? new Date(previous_entry.date).getFullYear()
+        : null;
+
+      if (this_year > first_year && current_chunk_year) {
+        if (this_year > current_chunk_year) {
+          const next_chunk = [l];
+
+          return acc.concat([next_chunk]);
+        } else {
+          let updated_acc = acc.slice();
+
+          updated_acc[updated_acc.length - 1] = current_chunk.concat(l);
+
+          return updated_acc;
+        }
+      } else {
+        const updated_acc = [current_chunk.concat(l)];
+
+        return updated_acc;
+      }
+    },
+    [[]]
+  );
+  const yearly_totals = year_chunks.reduce((acc, chunk) => {
+    const chunk_total = chunk.reduce((cacc, l) => cacc + l.item.value, 0);
+    return acc.concat([chunk_total]);
+  }, []);
+
+  return Math.floor(yearly_totals.reduce((acc, t) => acc + t, 0) / yearly_totals.length);
 };
 
 const get_daily_item_average = item => {
@@ -267,7 +437,7 @@ const get_daily_item_average = item => {
   return Math.floor(daily_totals.reduce((acc, t) => acc + t.total, 0) / daily_totals.length);
 };
 
-const map_to_calendar_chart_data = item => {
+const map_item_to_calendar_chart_data = item => {
   const { logs } = item;
 
   if (!Array.isArray(logs) || logs.length === 0) {
@@ -296,10 +466,58 @@ const map_to_calendar_chart_data = item => {
   }, []);
 };
 
+const map_log_to_calendar_chart_data = log => {
+  if (!log || !log.length) {
+    return [];
+  }
+
+  const ms_per_day = 1000 * 60 * 60 * 24;
+  const first_date = new Date(log[0].date);
+  const last_date = new Date(log[log.length - 1].date);
+  const first_day = new Date(first_date.getFullYear(), first_date.getMonth(), first_date.getDate());
+  const last_day = new Date(last_date.getFullYear(), last_date.getMonth(), last_date.getDate());
+  const diff_in_days = (last_day.getTime() - first_day.getTime()) / ms_per_day + 1;
+  const day_start_times = Array.apply(null, Array(diff_in_days)).map(function(_, i) {
+    return first_day.getTime() + i * ms_per_day;
+  });
+
+  return day_start_times.reduce((acc, day_start_time) => {
+    const next_day_start_time = day_start_time + ms_per_day;
+    const day_entries = log.filter(l => day_start_time <= l.date && l.date < next_day_start_time);
+    const day_total = day_entries.reduce((dacc, e) => dacc + e.item.value, 0);
+
+    return acc.concat([[new Date(day_start_time), day_total]]);
+  }, []);
+};
+
+const map_log_to_line_chart_data = log => {
+  if (!log || !log.length) {
+    return [];
+  }
+
+  const ms_per_day = 1000 * 60 * 60 * 24;
+  const first_date = new Date(log[0].date);
+  const last_date = new Date(log[log.length - 1].date);
+  const first_day = new Date(first_date.getFullYear(), first_date.getMonth(), first_date.getDate());
+  const last_day = new Date(last_date.getFullYear(), last_date.getMonth(), last_date.getDate());
+  const diff_in_days = (last_day.getTime() - first_day.getTime()) / ms_per_day + 1;
+  const day_start_times = Array.apply(null, Array(diff_in_days)).map(function(_, i) {
+    return first_day.getTime() + i * ms_per_day;
+  });
+
+  return day_start_times.reduce((acc, day_start_time) => {
+    const next_day_start_time = day_start_time + ms_per_day;
+    const day_entries = log.filter(l => day_start_time <= l.date && l.date < next_day_start_time);
+    const day_total = day_entries.reduce((dacc, e) => dacc + e.item.value, 0);
+
+    return acc.concat([[new Date(day_start_time), day_total]]);
+  }, []);
+};
+
 const scroll_viewport_to_top = () => {
   window.scrollTo(0, 0);
 
-  // fuck you mobile safari
+  // mobile safari
   document.body.scrollTop = 0;
 };
 
@@ -315,7 +533,7 @@ const get_this_week_start_date = week_start => {
   const current_weekday_date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const sunday_start_weekday_index = now.getDay();
   const weekday_index =
-    week_start && week_start === "sunday"
+    week_start && week_start === 'sunday'
       ? sunday_start_weekday_index
       : sunday_start_weekday_index === 0 ? 6 : sunday_start_weekday_index - 1;
   const day_interval = 1000 * 60 * 60 * 24;
@@ -338,7 +556,7 @@ const get_this_year_start_date = () => {
   return current_year_date;
 };
 
-module.exports = {
+export {
   extract_items_from_snapshot,
   extract_day,
   extract_this_week,
@@ -357,9 +575,14 @@ module.exports = {
   by_created_date_desc,
   by_last_logged_date_asc,
   by_last_logged_date_desc,
+  get_average,
   get_daily_log_average,
+  get_weekly_log_average,
+  get_monthly_log_average,
+  get_yearly_log_average,
   get_daily_item_average,
-  map_to_calendar_chart_data,
+  map_item_to_calendar_chart_data,
+  map_log_to_calendar_chart_data,
   scroll_viewport_to_top,
   get_today_start_date,
   get_this_week_start_date,

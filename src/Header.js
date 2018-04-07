@@ -1,5 +1,5 @@
-import React from "react";
-import HandleExteriorClickWrapper from "./HandleExteriorClickWrapper";
+import React from 'react';
+import HandleExteriorClickWrapper from './HandleExteriorClickWrapper';
 
 const Header = ({ title, subtitle, nav_open_handler, stats, actions, el_right_side_anchor }) => {
   // support passing arrays of stats intended to be grouped together
@@ -40,7 +40,7 @@ const Header = ({ title, subtitle, nav_open_handler, stats, actions, el_right_si
           <div className="inner">
             {subtitle ? <h2 id="header_subtitle">{subtitle}</h2> : null}
             {stat_blocks.map((b, block_index) => (
-              <ul key={block_index}>
+              <ul key={`b${block_index}`}>
                 {b.map((s, stat_index) => (
                   <li className={`header_stat ${s.css_class}`} key={stat_index}>
                     <div className="stat_label">{s.label}</div>
@@ -54,13 +54,16 @@ const Header = ({ title, subtitle, nav_open_handler, stats, actions, el_right_si
         ) : null}
         {actions ? (
           <div id="header_actions">
-            <form className="actions_menu_toggler" onSubmit={actions.menu_toggle_handler(true)(true)}>
+            <form
+              className="actions_menu_toggler"
+              onSubmit={actions.menu_toggle_handler(true)(true)}
+            >
               <button>
                 <i className="material-icons">more_vert</i>
               </button>
             </form>
             <HandleExteriorClickWrapper
-              css_class={actions.is_open ? "dropdown open" : "dropdown"}
+              css_class={actions.is_open ? 'dropdown open' : 'dropdown'}
               exterior_click_handler={actions.menu_toggle_handler(false)}
             >
               {actions.el_dropdown}

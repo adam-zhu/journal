@@ -1,10 +1,11 @@
-import React, { Component } from "react";
-import Header from "./Header";
-import Nav from "./Nav";
-import NewItemForm from "./NewItemForm";
-import materialize from "materialize-css";
-import { Link } from "react-router-dom";
-import { time_ago, disable_form, scroll_viewport_to_top } from "./util";
+import React, { Component } from 'react';
+import Header from './Header';
+import Nav from './Nav';
+import NewItemForm from './NewItemForm';
+import materialize from 'materialize-css';
+import { Link } from 'react-router-dom';
+import { time_ago, disable_form, scroll_viewport_to_top } from './util';
+import { create_item } from './db_actions';
 
 class CreateItem extends Component {
   constructor(props) {
@@ -36,8 +37,6 @@ class CreateItem extends Component {
   };
 
   add_new_submit_handler = e => {
-    const create_new = model => () => this.props.db.ref("items").push(model);
-    const redirect_to_items = () => this.props.history.push("/journal/items");
     const el_form = e.target;
     const name = el_form.name.value.trim();
     const value = Number(el_form.value.value);
@@ -53,15 +52,18 @@ class CreateItem extends Component {
     e.preventDefault();
 
     if (!name) {
-      return alert("Item cannot be blank");
+      return alert('Item cannot be blank');
     }
 
     if (isNaN(value) || value === 0) {
-      return alert("Value must be a nonzero number");
+      return alert('Value must be a nonzero number');
     }
 
+    const redirect_to_items = () => this.props.history.push('/journal/items');
+    const create_the_item = create_item(this.props.db);
+
     disable_form(el_form)
-      .then(create_new(model))
+      .then(create_the_item(model))
       .then(redirect_to_items)
       .catch(alert);
   };
@@ -74,62 +76,62 @@ class CreateItem extends Component {
     const last_created_name_stat =
       items === null
         ? {
-            label: "last created",
+            label: 'last created',
             value: <span className="loader stat" />,
             subtitle: null,
-            css_class: "last_created"
+            css_class: 'last_created'
           }
         : last_created
           ? {
-              label: "last created",
+              label: 'last created',
               value: last_created.name,
               subtitle: [time_ago(last_created.created_date)],
-              css_class: "text_value timestamp"
+              css_class: 'text_value timestamp'
             }
           : {
-              label: "last created",
-              value: "none",
+              label: 'last created',
+              value: 'none',
               subtitle: null,
-              css_class: "text_value"
+              css_class: 'text_value'
             };
     const last_created_value_stat =
       items === null
         ? {
-            label: "value",
+            label: 'value',
             value: <span className="loader stat" />,
             subtitle: null,
-            css_class: "last_created"
+            css_class: 'last_created'
           }
         : last_created
           ? {
-              label: "value",
+              label: 'value',
               value: last_created.value,
               subtitle: null,
-              css_class: ""
+              css_class: ''
             }
           : {
-              label: "value",
-              value: "none",
+              label: 'value',
+              value: 'none',
               subtitle: null,
-              css_class: ""
+              css_class: ''
             };
 
     return (
-      <div id="container" className={`${nav ? "nav_open" : ""}`}>
+      <div id="container" className={`${nav ? 'nav_open' : ''}`}>
         <Header
-          title={"Create Item"}
+          title={'Create Item'}
           stats={[last_created_name_stat, last_created_value_stat]}
           nav_open_handler={nav_open_handler}
           el_right_side_anchor={
-            <Link to={"/journal/items"}>
+            <Link to={'/journal/items'}>
               <i className="material-icons">list</i>
             </Link>
           }
         />
-        <Nav open={nav} active={"create_item"} nav_close_handler={nav_close_handler} />
-        <div id="overlay" className={nav ? "visible" : ""} onClick={nav_close_handler} />
+        <Nav open={nav} active={'create_item'} nav_close_handler={nav_close_handler} />
+        <div id="overlay" className={nav ? 'visible' : ''} onClick={nav_close_handler} />
         <div className="row create_item">
-          <NewItemForm submit_handler={add_new_submit_handler} button_text={"Create"} />
+          <NewItemForm submit_handler={add_new_submit_handler} button_text={'Create'} />
         </div>
       </div>
     );

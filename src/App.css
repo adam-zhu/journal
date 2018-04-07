@@ -1,7 +1,7 @@
 body {
   background: #fafafa;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue",
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell,
+    'Helvetica Neue', sans-serif;
   color: #212121;
   -webkit-overflow-scrolling: touch;
   -webkit-font-smoothing: antialiased;
@@ -31,7 +31,8 @@ header {
   width: 100%;
   background: #0069c0;
   padding-top: 0.5rem;
-  box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.14), 0 1px 7px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -1px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.14), 0 1px 7px 0 rgba(0, 0, 0, 0.12),
+    0 3px 1px -1px rgba(0, 0, 0, 0.2);
 }
 
 header a {
@@ -145,7 +146,8 @@ header a {
   transform: scale(0);
   transform-origin: top right;
   transition: all 0.15s;
-  box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12),
+    0 2px 4px -1px rgba(0, 0, 0, 0.3);
 }
 
 #header_actions .dropdown.open {
@@ -334,7 +336,8 @@ td span.value {
   padding: 1rem calc(2rem - 0.75rem) 0.5rem calc(2rem - 0.75rem);
   margin-bottom: 1rem;
   background: white;
-  box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.14), 0 1px 7px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -1px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.14), 0 1px 7px 0 rgba(0, 0, 0, 0.12),
+    0 3px 1px -1px rgba(0, 0, 0, 0.2);
 }
 
 .new_item button {
@@ -456,17 +459,20 @@ td span.value {
 .charts {
   background: white;
   padding-top: 2rem;
-  box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.14), 0 1px 7px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -1px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.14), 0 1px 7px 0 rgba(0, 0, 0, 0.12),
+    0 3px 1px -1px rgba(0, 0, 0, 0.2);
   margin-bottom: 2rem;
 }
 
 .charts div {
   margin: auto;
   max-width: 800px;
+  margin-bottom: 3rem;
 }
 
-.charts .calendar_chart {
-  margin-bottom: 2rem;
+.charts .line_chart {
+  padding: 0 2rem;
+  margin-bottom: 0;
 }
 
 .item_log {

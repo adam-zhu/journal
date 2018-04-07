@@ -1,21 +1,26 @@
-import React, { Component } from "react";
-import Header from "./Header";
-import Nav from "./Nav";
-import ActivityLogTable from "./ActivityLogTable";
-import HandleExteriorClickWrapper from "./HandleExteriorClickWrapper";
-import "./Overview.css";
-import { Link } from "react-router-dom";
+import React, { Component } from 'react';
+import Header from './Header';
+import Nav from './Nav';
+import ActivityLogTable from './ActivityLogTable';
+import HandleExteriorClickWrapper from './HandleExteriorClickWrapper';
+import './Overview.css';
+import { Link } from 'react-router-dom';
 import {
   time_ago,
   format_date_full,
+  get_average,
   get_daily_log_average,
+  get_weekly_log_average,
+  get_monthly_log_average,
+  get_yearly_log_average,
   scroll_viewport_to_top,
   extract_day,
   extract_this_week,
   extract_this_month,
   extract_this_year,
-  extract_range
-} from "./util";
+  extract_range,
+  map_log_to_calendar_chart_data
+} from './util';
 
 class Overview extends Component {
   constructor(props) {
@@ -23,36 +28,45 @@ class Overview extends Component {
 
     scroll_viewport_to_top();
 
+    // load charting library
+    window.google.charts.load('current', { packages: ['calendar', 'corechart', 'line'] });
+
     this.state = {
       nav: false,
       selected_view_option: this.view_options[0],
       view_options_dropdown_is_open: false,
       start_date: null,
       end_date: null,
-      display_log: null
+      display_log: null,
+      stats_title: null,
+      stats: null
     };
   }
 
   view_options = [
     {
-      value: "day",
-      display_text: "Today"
+      value: 'all',
+      display_text: 'All Time'
     },
     {
-      value: "week",
-      display_text: "Week"
+      value: 'day',
+      display_text: 'Today'
     },
     {
-      value: "month",
-      display_text: "Month"
+      value: 'week',
+      display_text: 'Week'
     },
     {
-      value: "year",
-      display_text: "Year"
+      value: 'month',
+      display_text: 'Month'
     },
     {
-      value: "range",
-      display_text: "Date Range"
+      value: 'year',
+      display_text: 'Year'
+    },
+    {
+      value: 'range',
+      display_text: 'Date Range'
     }
   ];
 
@@ -88,7 +102,7 @@ class Overview extends Component {
   view_option_select_handler = view_option => e => {
     e.preventDefault();
 
-    const { active_log } = this.props;
+    const { active_log, items } = this.props;
     const { start_date, end_date } = this.state;
     const display_log = resolve_display_log({
       selected_view_option: view_option,
@@ -96,51 +110,98 @@ class Overview extends Component {
       start_date,
       end_date
     });
+    const { stats_title, stats } = resolve_stats({
+      selected_view_option: view_option,
+      display_log,
+      active_log
+    });
 
     this.setState({
       ...this.state,
       selected_view_option: view_option,
       view_options_dropdown_is_open: false,
-      display_log
+      display_log,
+      stats_title,
+      stats
     });
   };
 
   static getDerivedStateFromProps(nextProps, prevState) {
-    const { active_log } = nextProps;
+    const { active_log, items } = nextProps;
     const { selected_view_option, start_date, end_date } = prevState;
-    const display_log = resolve_display_log({ active_log, selected_view_option, start_date, end_date });
+    const display_log = resolve_display_log({
+      active_log,
+      selected_view_option,
+      start_date,
+      end_date
+    });
+    const { stats_title, stats } = resolve_stats({
+      selected_view_option,
+      display_log,
+      active_log
+    });
 
     return {
       ...prevState,
-      display_log
+      display_log,
+      stats_title,
+      stats
     };
+  }
+
+  getSnapshotBeforeUpdate(prevProps, prevState) {
+    if (
+      prevProps.active_log === null ||
+      prevProps.items === null ||
+      prevState.selected_view_option.value !== this.state.selected_view_option.value
+    ) {
+      return true;
+    }
+
+    return null;
   }
 
   render() {
     const { active_log, score, today_score } = this.props;
-    const { nav, selected_view_option, view_options_dropdown_is_open, display_log } = this.state;
+    const {
+      nav,
+      selected_view_option,
+      view_options_dropdown_is_open,
+      display_log,
+      stats_title,
+      stats
+    } = this.state;
     const {
       nav_open_handler,
       nav_close_handler,
       view_options_dropdown_toggle_handler,
       view_option_select_handler
     } = this;
+    const el_charts = (
+      <div className="charts">
+        {selected_view_option.value === 'all' || selected_view_option.value === 'year' ? (
+          <div id="overview_calendar_chart" className="calendar_chart" />
+        ) : null}
+        <div id="overview_line_chart" className="line_chart" />
+        <div id="overview_pie_chart" className="pie_chart" />
+      </div>
+    );
 
     return (
-      <div id="container" className={`${nav ? "nav_open" : ""}`}>
+      <div id="container" className={`${nav ? 'nav_open' : ''}`}>
         <Header
-          title={"Overview"}
+          title={'Overview'}
           subtitle={null}
           stats={null}
           nav_open_handler={nav_open_handler}
           el_right_side_anchor={
-            <Link to={"/journal/home"}>
+            <Link to={'/journal'}>
               <i className="material-icons">home</i>
             </Link>
           }
         />
-        <Nav open={nav} active={"overview"} nav_close_handler={nav_close_handler} />
-        <div id="overlay" className={nav ? "visible" : ""} onClick={nav_close_handler} />
+        <Nav open={nav} active={'overview'} nav_close_handler={nav_close_handler} />
+        <div id="overlay" className={nav ? 'visible' : ''} onClick={nav_close_handler} />
         <section id="overview_config">
           <div className="inner">
             <label className="section_label">Viewing</label>
@@ -153,7 +214,8 @@ class Overview extends Component {
             />
           </div>
         </section>
-        {resolve_stats({ selected_view_option, display_log, active_log })}
+        <OverviewStats title={stats_title} stats={stats} />
+        {display_log && display_log.length ? el_charts : null}
         <section id="log">
           {display_log === null ? (
             <span className="loader" />
@@ -165,6 +227,23 @@ class Overview extends Component {
         </section>
       </div>
     );
+  }
+
+  componentDidUpdate(prevProps, prevState, should_render_charts) {
+    if (should_render_charts === true) {
+      const { display_log, selected_view_option } = this.state;
+      const el_calendar_container = document.getElementById('overview_calendar_chart');
+      const el_line_container = document.getElementById('overview_line_chart');
+      const el_pie_container = document.getElementById('overview_pie_chart');
+
+      render_charts({
+        display_log,
+        view_option: selected_view_option,
+        el_calendar_container,
+        el_line_container,
+        el_pie_container
+      });
+    }
   }
 }
 
@@ -193,7 +272,7 @@ const ViewOptionsDropdown = ({ open, selected, options, open_toggle_handler, sel
         </button>
       </form>
       <HandleExteriorClickWrapper
-        css_class={open ? "dropdown open" : "dropdown"}
+        css_class={open ? 'dropdown open' : 'dropdown'}
         exterior_click_handler={open_toggle_handler(false)}
       >
         <ul className="dropdown_options">{el_options}</ul>
@@ -230,7 +309,7 @@ const OverviewStats = ({ title, stats }) => {
       <div className="inner">
         {title ? <h2 id="overview_stats_title">{title}</h2> : null}
         {stat_blocks.map((b, block_index) => (
-          <ul key={block_index}>
+          <ul key={`b${block_index}`}>
             {b.map((s, stat_index) => (
               <li className={`overview_stat ${s.css_class}`} key={stat_index}>
                 <div className="stat_label">{s.label}</div>
@@ -246,54 +325,103 @@ const OverviewStats = ({ title, stats }) => {
 };
 
 const resolve_stats = ({ selected_view_option, display_log, active_log }) => {
-  const week_start_day = "monday";
+  const week_start_day = 'monday';
 
   switch (selected_view_option.value) {
-    case "day":
+    case 'all':
+      return all_stats({ all_log: active_log });
+    case 'day':
       return day_stats({ day_log: display_log, all_log: active_log });
-    case "week":
-    case "month":
-    case "year":
-    case "range":
+    case 'week':
+      return week_stats({ week_log: display_log, all_log: active_log });
+    case 'month':
+      return month_stats({ month_log: display_log, all_log: active_log });
+    case 'year':
+      return year_stats({ year_log: display_log, all_log: active_log });
+    case 'range':
     default:
-      return null;
+      return day_stats({ day_log: display_log, all_log: active_log });
   }
 };
 
 const resolve_display_log = ({ selected_view_option, start_date, end_date, active_log }) => {
-  const week_start_day = "monday";
+  const week_start_day = 'monday';
 
   switch (selected_view_option.value) {
-    case "day":
+    case 'all':
+      return active_log;
+    case 'day':
       return active_log ? extract_day(Date.now(), active_log) : null;
-    case "week":
+    case 'week':
       return active_log ? extract_this_week(week_start_day, active_log) : null;
-    case "month":
+    case 'month':
       return active_log ? extract_this_month(active_log) : null;
-    case "year":
+    case 'year':
       return active_log ? extract_this_year(active_log) : null;
-    case "range":
-      return active_log ? extract_range({ start: start_date, end: end_date, log: active_log }) : null;
+    case 'range':
+      return active_log
+        ? extract_range({ start: start_date, end: end_date, log: active_log })
+        : null;
     default:
       return null;
   }
 };
 
+const all_stats = ({ all_log }) => {
+  if (!all_log) {
+    return { stats_title: null, stats: null };
+  }
+
+  const daily_average = all_log.length === 0 ? 'n/a' : get_daily_log_average(all_log);
+  const score = all_log.reduce((acc, l) => acc + l.item.value, 0);
+  const stats = [
+    {
+      label: 'entries',
+      value: all_log.length
+    },
+    {
+      label: 'score',
+      value:
+        score === null ? (
+          <span className="loader stat" />
+        ) : typeof score === 'number' ? (
+          score
+        ) : (
+          'n/a'
+        ),
+      css_class: 'total_score'
+    },
+    {
+      label: 'daily avg',
+      value: all_log.length ? daily_average : 'n/a'
+    }
+  ];
+
+  return {
+    stats_title: [
+      <span>{`${format_date_full(all_log[0].date)}`}</span>,
+      ` - `,
+      <span>{`${format_date_full(Date.now())}`}</span>
+    ],
+    stats
+  };
+};
+
 const day_stats = ({ day_log, all_log }) => {
   if (!day_log) {
-    return null;
+    return { stats_title: null, stats: null };
   }
 
   if (!all_log) {
-    return null;
+    return { stats_title: null, stats: null };
   }
 
-  const daily_average = get_daily_log_average(all_log);
+  const daily_average = all_log.length === 0 ? 'n/a' : get_daily_log_average(all_log);
   const day_score = day_log.reduce((acc, l) => acc + l.item.value, 0);
   const score = all_log.reduce((acc, l) => acc + l.item.value, 0);
   const stats = [
     {
-      label: "today",
+      label: 'today',
       value:
         day_score === 0
           ? 0
@@ -301,21 +429,264 @@ const day_stats = ({ day_log, all_log }) => {
             ? [<i className="material-icons">arrow_upward</i>, day_score]
             : [<i className="material-icons">arrow_downward</i>, day_score],
       subtitle: null,
-      css_class: ""
+      css_class: ''
     },
     {
-      label: "daily avg",
-      value: all_log.length ? daily_average : "n/a",
+      label: 'daily avg',
+      value: all_log.length ? daily_average : 'n/a',
       subtitle: null,
-      css_class: ""
+      css_class: ''
     },
     {
-      label: "total",
-      value: score ? score : <span className="loader stat" />,
+      label: 'total',
+      value:
+        score === null ? (
+          <span className="loader stat" />
+        ) : typeof score === 'number' ? (
+          score
+        ) : (
+          'n/a'
+        ),
       subtitle: null,
-      css_class: "total_score"
+      css_class: 'total_score'
     }
   ];
 
-  return <OverviewStats stats={stats} />;
+  return { stats_title: null, stats };
+};
+
+const week_stats = ({ week_log, all_log }) => {
+  if (!week_log) {
+    return { stats_title: null, stats: null };
+  }
+
+  if (!all_log) {
+    return { stats_title: null, stats: null };
+  }
+
+  const weekly_average = all_log.length === 0 ? 'n/a' : get_weekly_log_average('monday', all_log);
+  const week_score = week_log.reduce((acc, l) => acc + l.item.value, 0);
+  const score = all_log.reduce((acc, l) => acc + l.item.value, 0);
+  const stats = [
+    {
+      label: 'week',
+      value:
+        week_score === 0
+          ? 0
+          : week_score > 0
+            ? [<i className="material-icons">arrow_upward</i>, week_score]
+            : [<i className="material-icons">arrow_downward</i>, week_score],
+      subtitle: null,
+      css_class: ''
+    },
+    {
+      label: 'weekly avg',
+      value: all_log.length ? weekly_average : 'n/a',
+      subtitle: null,
+      css_class: ''
+    },
+    {
+      label: 'total',
+      value:
+        score === null ? (
+          <span className="loader stat" />
+        ) : typeof score === 'number' ? (
+          score
+        ) : (
+          'n/a'
+        ),
+      subtitle: null,
+      css_class: 'total_score'
+    }
+  ];
+
+  return { stats_title: null, stats };
+};
+
+const month_stats = ({ month_log, all_log }) => {
+  if (!month_log) {
+    return { stats_title: null, stats: null };
+  }
+
+  if (!all_log) {
+    return { stats_title: null, stats: null };
+  }
+
+  const monthly_average = all_log.length === 0 ? 'n/a' : get_monthly_log_average(all_log);
+  const month_score = month_log.reduce((acc, l) => acc + l.item.value, 0);
+  const score = all_log.reduce((acc, l) => acc + l.item.value, 0);
+  const stats = [
+    {
+      label: 'month',
+      value:
+        month_score === 0
+          ? 0
+          : month_score > 0
+            ? [<i className="material-icons">arrow_upward</i>, month_score]
+            : [<i className="material-icons">arrow_downward</i>, month_score],
+      subtitle: null,
+      css_class: ''
+    },
+    {
+      label: 'monthly avg',
+      value: all_log.length ? monthly_average : 'n/a',
+      subtitle: null,
+      css_class: ''
+    },
+    {
+      label: 'total',
+      value:
+        score === null ? (
+          <span className="loader stat" />
+        ) : typeof score === 'number' ? (
+          score
+        ) : (
+          'n/a'
+        ),
+      subtitle: null,
+      css_class: 'total_score'
+    }
+  ];
+
+  return { stats_title: null, stats };
+};
+
+const year_stats = ({ year_log, all_log }) => {
+  if (!year_log) {
+    return { stats_title: null, stats: null };
+  }
+
+  if (!all_log) {
+    return { stats_title: null, stats: null };
+  }
+
+  const yearly_average = all_log.length === 0 ? 'n/a' : get_yearly_log_average(all_log);
+  const year_score = year_log.reduce((acc, l) => acc + l.item.value, 0);
+  const score = all_log.reduce((acc, l) => acc + l.item.value, 0);
+  const stats = [
+    {
+      label: 'year',
+      value:
+        year_score === 0
+          ? 0
+          : year_score > 0
+            ? [<i className="material-icons">arrow_upward</i>, year_score]
+            : [<i className="material-icons">arrow_downward</i>, year_score],
+      subtitle: null,
+      css_class: ''
+    },
+    {
+      label: 'yearly avg',
+      value: all_log.length ? yearly_average : 'n/a',
+      subtitle: null,
+      css_class: ''
+    },
+    {
+      label: 'total',
+      value:
+        score === null ? (
+          <span className="loader stat" />
+        ) : typeof score === 'number' ? (
+          score
+        ) : (
+          'n/a'
+        ),
+      subtitle: null,
+      css_class: 'total_score'
+    }
+  ];
+
+  return { stats_title: null, stats };
+};
+
+const render_charts = ({
+  display_log,
+  view_option,
+  items,
+  el_calendar_container,
+  el_line_container,
+  el_pie_container
+}) => {
+  window.google.charts.setOnLoadCallback(() => {
+    if (display_log && display_log.length) {
+      // calendar chart
+      if (view_option.value === 'all' || view_option.value === 'year') {
+        const calendar_data = new window.google.visualization.DataTable();
+        const calendar_chart = new window.google.visualization.Calendar(el_calendar_container);
+        calendar_data.addColumn({ type: 'date', id: 'Date' });
+        calendar_data.addColumn({ type: 'number', id: 'Logged' });
+        calendar_data.addRows(map_log_to_calendar_chart_data(display_log));
+        calendar_chart.draw(calendar_data, {
+          calendar: {
+            cellSize: window.innerWidth < 800 ? (window.innerWidth < 500 ? 5.5 : 10) : 14
+          },
+          width: window.innerWidth < 800 ? (window.innerWidth < 500 ? 320 : 572) : 800,
+          height: window.innerWidth < 800 ? (window.innerWidth < 500 ? 72 : 107) : 145
+        });
+      }
+
+      // line chart
+      const line_data = new window.google.visualization.DataTable();
+      const line_chart = new window.google.charts.Line(el_line_container);
+      const running_totals = display_log.reduce((acc, l) => {
+        let new_row;
+
+        if (acc.length > 0) {
+          const prev_row_value = acc[acc.length - 1][1];
+          new_row = [new Date(l.date), l.item.value + prev_row_value];
+        } else {
+          new_row = [new Date(l.date), l.item.value];
+        }
+
+        return acc.concat([new_row]);
+      }, []);
+      line_data.addColumn({ type: 'date', id: 'Time' });
+      line_data.addColumn({ type: 'number', id: 'Score' });
+      running_totals.forEach(rt => line_data.addRow(rt));
+      line_chart.draw(
+        line_data,
+        window.google.charts.Line.convertOptions({
+          width: '100%'
+        })
+      );
+    }
+
+    // pie chart
+    const pie_data = new window.google.visualization.DataTable();
+    pie_data.addColumn({ type: 'string', id: 'Name' });
+    pie_data.addColumn({ type: 'number', id: 'Impact' });
+    const pie_chart = new window.google.visualization.PieChart(el_pie_container);
+
+    if (view_option.value === 'all' && items && items.length) {
+      items.forEach(item => {
+        if (item.logs && item.logs.length) {
+          pie_data.addRow([item.name, item.logs.length * Math.abs(item.value)]);
+        }
+      });
+    } else {
+      const display_log_by_item =
+        display_log && display_log.length
+          ? display_log.reduce(
+              (acc, l) => ({
+                ...acc,
+                [l.item.key]: acc[l.item.key]
+                  ? Object.assign(acc[l.item.key], { log_count: acc[l.item.key].log_count + 1 })
+                  : Object.assign({}, l.item, { log_count: 1 })
+              }),
+              {}
+            )
+          : [];
+
+      Object.keys(display_log_by_item).forEach(k => {
+        const item = display_log_by_item[k];
+        pie_data.addRow([item.name, item.log_count * Math.abs(item.value)]);
+      });
+    }
+
+    pie_chart.draw(pie_data, {
+      title: 'Item Impacts',
+      pieHole: 0.4,
+      width: '100%'
+    });
+  });
 };

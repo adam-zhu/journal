@@ -1,17 +1,17 @@
-import React, { Component } from "react";
-import "./materialize.css";
-import materialize from "materialize-css";
-import "./App.css";
-import "./loader.css";
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
-import Today from "./Today";
-import Entry from "./Entry";
-import LogNew from "./LogNew";
-import Items from "./Items";
-import Item from "./Item";
-import CreateItem from "./CreateItem";
-import Overview from "./Overview";
-import { extract_items_from_snapshot, extract_day } from "./util";
+import React, { Component } from 'react';
+import './materialize.css';
+import materialize from 'materialize-css';
+import './App.css';
+import './loader.css';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import Today from './Today';
+import Entry from './Entry';
+import LogNew from './LogNew';
+import Items from './Items';
+import Item from './Item';
+import CreateItem from './CreateItem';
+import Overview from './Overview';
+import { extract_items_from_snapshot, extract_day } from './util';
 
 class App extends Component {
   constructor(props) {
@@ -27,17 +27,23 @@ class App extends Component {
     };
 
     // load initial data and set up change listeners
-    this.props.db.ref("items").on("value", snapshot => {
+    this.props.db.ref('items').on('value', snapshot => {
       const all_items = extract_items_from_snapshot(snapshot).reverse();
-      const score = this.state.log ? this.state.log.reduce((acc, l) => acc + l.item.value, 0) : null;
+      const score = this.state.log
+        ? this.state.log.reduce((acc, l) => acc + l.item.value, 0)
+        : null;
       const today_log = this.state.log ? extract_day(Date.now(), this.state.log) : null;
-      const today_score = this.state.today_log ? this.state.today_log.reduce((acc, l) => acc + l.item.value, 0) : null;
+      const today_score = this.state.today_log
+        ? this.state.today_log.reduce((acc, l) => acc + l.item.value, 0)
+        : null;
 
       this.setState({
         ...this.state,
         items: all_items.filter(i => i.active).map(i => ({
           ...i,
-          logs: this.state.active_log ? this.state.active_log.filter(l => l.item && l.item.key === i.key) : []
+          logs: this.state.active_log
+            ? this.state.active_log.filter(l => l.item && l.item.key === i.key)
+            : []
         })),
         score,
         today_score,
@@ -45,7 +51,7 @@ class App extends Component {
       });
     });
 
-    this.props.db.ref("log").on("value", snapshot => {
+    this.props.db.ref('log').on('value', snapshot => {
       const log = extract_items_from_snapshot(snapshot);
       const active_log = log ? log.filter(l => l.active !== false) : null;
       const score = active_log ? active_log.reduce((acc, l) => acc + l.item.value, 0) : null;

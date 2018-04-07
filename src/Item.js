@@ -1,14 +1,15 @@
-import React, { Component } from "react";
-import Header from "./Header";
-import Nav from "./Nav";
-import { Link } from "react-router-dom";
+import React, { Component } from 'react';
+import Header from './Header';
+import Nav from './Nav';
+import { Link } from 'react-router-dom';
 import {
   time_ago,
   disable_form,
   get_daily_item_average,
-  map_to_calendar_chart_data,
+  map_item_to_calendar_chart_data,
   scroll_viewport_to_top
-} from "./util";
+} from './util';
+import { add_entry_for_item } from './db_actions';
 
 class Item extends Component {
   constructor(props) {
@@ -17,7 +18,7 @@ class Item extends Component {
     scroll_viewport_to_top();
 
     // load charting library
-    window.google.charts.load("current", { packages: ["calendar", "corechart"] });
+    window.google.charts.load('current', { packages: ['calendar', 'corechart'] });
 
     this.state = {
       nav: false,
@@ -58,14 +59,15 @@ class Item extends Component {
 
   log_handler = item => e => {
     const el_form = e.target;
-    const log_item = item => () => this.props.db.ref("log").push({ date: Date.now(), item: item, active: true });
-    const redirect_to_home = () => this.props.history.push("/journal");
 
     e.preventDefault();
 
     if (window.confirm(`Log ${item.name} for ${item.value}?`)) {
+      const log_the_item = add_entry_for_item(this.props.db);
+      const redirect_to_home = () => this.props.history.push('/journal');
+
       disable_form(el_form)
-        .then(log_item(item))
+        .then(log_the_item(item))
         .then(redirect_to_home)
         .catch(alert);
     }
@@ -78,12 +80,14 @@ class Item extends Component {
 
     window.google.charts.setOnLoadCallback(() => {
       const calendar_data = new window.google.visualization.DataTable();
-      calendar_data.addColumn({ type: "date", id: "Date" });
-      calendar_data.addColumn({ type: "number", id: "Logged" });
-      calendar_data.addRows(item && item.logs && item.logs.length ? map_to_calendar_chart_data(item) : []);
+      calendar_data.addColumn({ type: 'date', id: 'Date' });
+      calendar_data.addColumn({ type: 'number', id: 'Logged' });
+      calendar_data.addRows(
+        item && item.logs && item.logs.length ? map_item_to_calendar_chart_data(item) : []
+      );
 
       const calendar_chart = new window.google.visualization.Calendar(
-        document.getElementById("item_detail_calendar_chart")
+        document.getElementById('item_detail_calendar_chart')
       );
       calendar_chart.draw(calendar_data, {
         calendar: { cellSize: window.innerWidth < 800 ? (window.innerWidth < 500 ? 5.5 : 10) : 14 },
@@ -92,22 +96,25 @@ class Item extends Component {
       });
 
       const pie_data = new window.google.visualization.DataTable();
-      pie_data.addColumn({ type: "string", id: "Item" });
-      pie_data.addColumn({ type: "number", id: "Logged" });
+      pie_data.addColumn({ type: 'string', id: 'Item' });
+      pie_data.addColumn({ type: 'number', id: 'Logged' });
 
       if (item && active_log) {
         pie_data.addRow([item.name, item.logs.length * Math.abs(item.value)]);
         pie_data.addRow([
-          "all other items",
-          active_log.reduce((acc, l) => acc + Math.abs(l.item.value), 0) - item.logs.length * Math.abs(item.value)
+          'all other items',
+          active_log.reduce((acc, l) => acc + Math.abs(l.item.value), 0) -
+            item.logs.length * Math.abs(item.value)
         ]);
       }
 
-      const pie_chart = new window.google.visualization.PieChart(document.getElementById("item_detail_pie_chart"));
+      const pie_chart = new window.google.visualization.PieChart(
+        document.getElementById('item_detail_pie_chart')
+      );
       pie_chart.draw(pie_data, {
-        title: "Impact",
+        title: 'Impact',
         pieHole: 0.4,
-        width: "100%"
+        width: '100%'
       });
     });
 
@@ -124,66 +131,86 @@ class Item extends Component {
     const stats = [
       [
         {
-          label: "value",
-          value: item === null ? <span className="loader stat" /> : item === undefined ? "n/a" : item.value,
+          label: 'value',
+          value:
+            item === null ? (
+              <span className="loader stat" />
+            ) : item === undefined ? (
+              'n/a'
+            ) : (
+              item.value
+            ),
           subtitle: null,
-          css_class: ""
+          css_class: ''
         },
         {
-          label: "logged",
+          label: 'logged',
           value:
             item === null || today_log === null ? (
               <span className="loader stat" />
             ) : item === undefined ? (
-              "n/a"
+              'n/a'
             ) : (
               today_log.filter(l => l.item.key === item.key).length
             ),
           subtitle: item === null ? null : `times today`,
-          css_class: ""
+          css_class: ''
         },
         {
-          label: "daily avg",
+          label: 'daily avg',
           value:
             item === null ? (
               <span className="loader stat" />
             ) : item === undefined || !item.logs || !item.logs.length ? (
-              "n/a"
+              'n/a'
             ) : (
               get_daily_item_average(item)
             ),
-          subtitle: "times",
-          css_class: ""
+          subtitle: 'times',
+          css_class: ''
         },
         {
-          label: "logged",
-          value: item === null ? <span className="loader stat" /> : item === undefined ? "n/a" : item.logs.length,
-          subtitle: item === null ? null : `times total`,
-          css_class: ""
-        }
-      ],
-      [
-        {
-          label: "last logged",
+          label: 'logged',
           value:
             item === null ? (
               <span className="loader stat" />
             ) : item === undefined ? (
-              "n/a"
+              'n/a'
+            ) : (
+              item.logs.length
+            ),
+          subtitle: item === null ? null : `times total`,
+          css_class: ''
+        }
+      ],
+      [
+        {
+          label: 'last logged',
+          value:
+            item === null ? (
+              <span className="loader stat" />
+            ) : item === undefined ? (
+              'n/a'
             ) : item.logs.length ? (
               time_ago(item.logs[item.logs.length - 1].date)
             ) : (
-              "never"
+              'never'
             ),
-          subtitle: "",
-          css_class: "text_value"
+          subtitle: '',
+          css_class: 'text_value'
         },
         {
-          label: "created",
+          label: 'created',
           value:
-            item === null ? <span className="loader stat" /> : item === undefined ? "n/a" : time_ago(item.created_date),
-          subtitle: "",
-          css_class: "text_value"
+            item === null ? (
+              <span className="loader stat" />
+            ) : item === undefined ? (
+              'n/a'
+            ) : (
+              time_ago(item.created_date)
+            ),
+          subtitle: '',
+          css_class: 'text_value'
         }
       ]
     ];
@@ -207,21 +234,21 @@ class Item extends Component {
     };
 
     return (
-      <div id="container" className={`${nav ? "nav_open" : ""}`}>
+      <div id="container" className={`${nav ? 'nav_open' : ''}`}>
         <Header
-          title={"Item Details"}
-          subtitle={item === null ? null : item === undefined ? "item not found" : item.name}
+          title={'Item Details'}
+          subtitle={item === null ? null : item === undefined ? 'item not found' : item.name}
           stats={stats}
           nav_open_handler={nav_open_handler}
           el_right_side_anchor={
-            <Link to={"/journal/items"}>
+            <Link to={'/journal/items'}>
               <i className="material-icons">list</i>
             </Link>
           }
           actions={header_actions}
         />
-        <Nav open={nav} active={"items"} nav_close_handler={nav_close_handler} />
-        <div id="overlay" className={nav ? "visible" : ""} onClick={nav_close_handler} />
+        <Nav open={nav} active={'items'} nav_close_handler={nav_close_handler} />
+        <div id="overlay" className={nav ? 'visible' : ''} onClick={nav_close_handler} />
         <div className="charts">
           <div id="item_detail_calendar_chart" className="calendar_chart" />
           <div id="item_detail_pie_chart" className="pie_chart" />
@@ -240,7 +267,9 @@ class Item extends Component {
                       <td>
                         <Link to={`/journal/entries/${l.key}`}>
                           {item.name}
-                          <span className={item.value < 0 ? "value negative" : "value positive"}>{item.value}</span>
+                          <span className={item.value < 0 ? 'value negative' : 'value positive'}>
+                            {item.value}
+                          </span>
                         </Link>
                       </td>
                       <td>

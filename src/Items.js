@@ -1,10 +1,10 @@
-import React, { Component } from "react";
-import Header from "./Header";
-import Nav from "./Nav";
-import NewItemForm from "./NewItemForm";
-import ItemTable from "./ItemTable";
-import { disable_form } from "./util.js";
-import { Link } from "react-router-dom";
+import React, { Component } from 'react';
+import Header from './Header';
+import Nav from './Nav';
+import NewItemForm from './NewItemForm';
+import ItemTable from './ItemTable';
+import { disable_form } from './util.js';
+import { Link } from 'react-router-dom';
 import {
   time_ago,
   format_date_full,
@@ -16,7 +16,7 @@ import {
   by_last_logged_date_asc,
   by_last_logged_date_desc,
   scroll_viewport_to_top
-} from "./util";
+} from './util';
 
 class Items extends Component {
   constructor(props) {
@@ -27,7 +27,7 @@ class Items extends Component {
     this.state = {
       nav: false,
       find_options_open: true,
-      find_query: "",
+      find_query: '',
       item_sort: null,
       filtered_sorted_items: null
     };
@@ -74,7 +74,9 @@ class Items extends Component {
     const items = this.props.items;
     const trimmed_cased_query = find_query.trim().toLowerCase();
     const filtered =
-      trimmed_cased_query !== "" ? items.filter(i => i.name.toLowerCase().indexOf(trimmed_cased_query) !== -1) : items;
+      trimmed_cased_query !== ''
+        ? items.filter(i => i.name.toLowerCase().indexOf(trimmed_cased_query) !== -1)
+        : items;
     const filtered_sorted_items = sort_items(this.state.item_sort, filtered);
 
     e.preventDefault();
@@ -91,7 +93,9 @@ class Items extends Component {
     const items = this.props.items;
     const trimmed_cased_query = find_query.trim().toLowerCase();
     const filtered =
-      trimmed_cased_query !== "" ? items.filter(i => i.name.toLowerCase().indexOf(trimmed_cased_query) !== -1) : items;
+      trimmed_cased_query !== ''
+        ? items.filter(i => i.name.toLowerCase().indexOf(trimmed_cased_query) !== -1)
+        : items;
     const filtered_sorted_items = sort_items(item_sort, filtered);
 
     e.preventDefault();
@@ -116,40 +120,40 @@ class Items extends Component {
     } = this;
     const stats = [
       {
-        label: "total items",
+        label: 'total items',
         value: items ? items.length : <span className="loader stat" />,
         subtitle: null,
-        css_class: "total_score"
+        css_class: 'total_score'
       }
     ];
     const table_items = filtered_sorted_items || items;
     const trimmed_cased_query = find_query.trim().toLowerCase();
 
     return (
-      <div id="container" className={`${nav ? "nav_open" : ""}`}>
+      <div id="container" className={`${nav ? 'nav_open' : ''}`}>
         <Header
-          title={"Items"}
+          title={'Items'}
           stats={stats}
           nav_open_handler={nav_open_handler}
           el_right_side_anchor={
-            <Link to={"/journal/create_item"}>
+            <Link to={'/journal/create_item'}>
               <i className="material-icons">playlist_add</i>
             </Link>
           }
         />
-        <Nav open={nav} active={"items"} nav_close_handler={nav_close_handler} />
-        <div id="overlay" className={nav ? "visible" : ""} onClick={nav_close_handler} />
+        <Nav open={nav} active={'items'} nav_close_handler={nav_close_handler} />
+        <div id="overlay" className={nav ? 'visible' : ''} onClick={nav_close_handler} />
         <div className="items">
-          <div className={`find_options ${find_options_open ? "open" : ""}`}>
+          <div className={`find_options ${find_options_open ? 'open' : ''}`}>
             <form
-              className={find_options_open ? "find_options_toggle open" : "find_options_toggle"}
+              className={find_options_open ? 'find_options_toggle open' : 'find_options_toggle'}
               onSubmit={find_options_open ? find_options_close_handler : find_options_open_handler}
             >
               <button className="btn-flat">
                 Options <i className="material-icons">chevron_right</i>
               </button>
             </form>
-            <div id="find_options" className={find_options_open ? "open" : ""}>
+            <div id="find_options" className={find_options_open ? 'open' : ''}>
               <form className="find_query_wrapper">
                 <div className="input-field row">
                   <input
@@ -181,7 +185,11 @@ class Items extends Component {
               <ItemTable items={table_items} />
             )}
           </div>
-          <Link id="create_item_button" className="floating_action_button" to={"/journal/create_item"}>
+          <Link
+            id="create_item_button"
+            className="floating_action_button"
+            to={'/journal/create_item'}
+          >
             <button className="btn-floating btn-large waves-light">
               <i className="material-icons">playlist_add</i>
             </button>
@@ -197,17 +205,17 @@ export default Items;
 // UTILS
 const sort_items = (item_sort, items) => {
   switch (item_sort) {
-    case "name asc":
+    case 'name asc':
       return items ? items.sort(by_name_asc) : items;
-    case "name desc":
+    case 'name desc':
       return items ? items.sort(by_name_desc) : items;
-    case "value asc":
+    case 'value asc':
       return items ? items.sort(by_value_asc) : items;
-    case "value desc":
+    case 'value desc':
       return items ? items.sort(by_value_desc) : items;
-    case "last_logged asc":
+    case 'last_logged asc':
       return items ? items.sort(by_last_logged_date_asc) : items;
-    case "last_logged desc":
+    case 'last_logged desc':
       return items ? items.sort(by_last_logged_date_desc) : items;
     default:
       return items ? items.sort(by_created_date_desc) : items;
@@ -215,65 +223,69 @@ const sort_items = (item_sort, items) => {
 };
 const generate_sort_options = (item_sort, sort_handler) => {
   let name = {
-    css_class: "chip name",
-    on_submit: sort_handler("name asc"),
-    text: "Name",
-    icon: ""
+    css_class: 'chip name',
+    on_submit: sort_handler('name asc'),
+    text: 'Name',
+    icon: ''
   };
   let value = {
-    css_class: "chip value",
-    on_submit: sort_handler("value asc"),
-    text: "Value",
-    icon: ""
+    css_class: 'chip value',
+    on_submit: sort_handler('value asc'),
+    text: 'Value',
+    icon: ''
   };
   let last_logged = {
-    css_class: "chip last_logged",
-    on_submit: sort_handler("last_logged asc"),
-    text: "Last Logged",
-    icon: ""
+    css_class: 'chip last_logged',
+    on_submit: sort_handler('last_logged asc'),
+    text: 'Last Logged',
+    icon: ''
   };
   const sort_options = [name, value, last_logged];
 
   switch (item_sort) {
-    case "name asc":
-      name.css_class = name.css_class + " blue white-text";
-      name.on_submit = sort_handler("name desc");
+    case 'name asc':
+      name.css_class = name.css_class + ' blue white-text';
+      name.on_submit = sort_handler('name desc');
       name.icon = <i className="material-icons">arrow_upward</i>;
       break;
-    case "name desc":
-      name.css_class = name.css_class + " blue white-text";
+    case 'name desc':
+      name.css_class = name.css_class + ' blue white-text';
       name.on_submit = sort_handler(null);
       name.icon = <i className="material-icons">arrow_downward</i>;
       break;
-    case "value asc":
-      value.css_class = value.css_class + " blue white-text";
-      value.on_submit = sort_handler("value desc");
+    case 'value asc':
+      value.css_class = value.css_class + ' blue white-text';
+      value.on_submit = sort_handler('value desc');
       value.icon = <i className="material-icons">arrow_upward</i>;
       break;
-    case "value desc":
-      value.css_class = value.css_class + " blue white-text";
+    case 'value desc':
+      value.css_class = value.css_class + ' blue white-text';
       value.on_submit = sort_handler(null);
       value.icon = <i className="material-icons">arrow_downward</i>;
       break;
-    case "last_logged asc":
-      last_logged.css_class = last_logged.css_class + " blue white-text";
-      last_logged.on_submit = sort_handler("last_logged desc");
+    case 'last_logged asc':
+      last_logged.css_class = last_logged.css_class + ' blue white-text';
+      last_logged.on_submit = sort_handler('last_logged desc');
       last_logged.icon = <i className="material-icons">arrow_upward</i>;
       break;
-    case "last_logged desc":
-      last_logged.css_class = last_logged.css_class + " blue white-text";
+    case 'last_logged desc':
+      last_logged.css_class = last_logged.css_class + ' blue white-text';
       last_logged.on_submit = sort_handler(null);
       last_logged.icon = <i className="material-icons">arrow_downward</i>;
       break;
+    default:
+      break;
   }
 
-  const generate_option_markup = sort_option => (
-    <li className={sort_option.css_class} onClick={sort_option.on_submit}>
+  const generate_option_markup = (sort_option, i) => (
+    <li className={sort_option.css_class} onClick={sort_option.on_submit} key={i}>
       {sort_option.text}
       {sort_option.icon}
     </li>
   );
-  const wrap = options => <ul className={item_sort ? `sort_options ${item_sort}` : "sort_options"}>{options}</ul>;
+  const wrap = options => (
+    <ul className={item_sort ? `sort_options ${item_sort}` : 'sort_options'}>{options}</ul>
+  );
 
   return wrap(sort_options.map(generate_option_markup));
 };
