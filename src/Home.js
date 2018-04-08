@@ -1,26 +1,27 @@
 import React, { Component } from 'react';
 import Header from './Header';
 import Nav from './Nav';
+import ActivityLogTable from './ActivityLogTable';
 import NewItemForm from './NewItemForm';
 import ItemLogTable from './ItemLogTable';
-import { disable_form } from './util.js';
-import { Link } from 'react-router-dom';
 import { add_entry_for_item, create_item_and_add_entry } from './db_actions';
+import { Link } from 'react-router-dom';
 import {
   time_ago,
   format_date_full,
+  get_daily_log_average,
+  scroll_viewport_to_top,
+  disable_form,
   by_name_asc,
   by_name_desc,
   by_value_asc,
   by_value_desc,
   by_created_date_desc,
   by_last_logged_date_asc,
-  by_last_logged_date_desc,
-  get_daily_log_average,
-  scroll_viewport_to_top
+  by_last_logged_date_desc
 } from './util';
 
-class LogNew extends Component {
+class Home extends Component {
   constructor(props) {
     super(props);
 
@@ -28,14 +29,13 @@ class LogNew extends Component {
 
     this.state = {
       nav: false,
+      modal: false,
       find_options_open: false,
       find_query: '',
       item_sort: null,
       filtered_sorted_items: null
     };
   }
-
-  redirect_to_home = () => this.props.history.push('/journal');
 
   nav_open_handler = e => {
     e.preventDefault();
@@ -52,6 +52,27 @@ class LogNew extends Component {
     this.setState({
       ...this.state,
       nav: false
+    });
+  };
+
+  modal_open_handler = e => {
+    e.preventDefault();
+
+    // hack
+    document.getElementById('modal').scrollTop = 0;
+
+    this.setState({
+      ...this.state,
+      modal: true
+    });
+  };
+
+  modal_close_handler = e => {
+    e.preventDefault();
+
+    this.setState({
+      ...this.state,
+      modal: false
     });
   };
 
@@ -82,7 +103,12 @@ class LogNew extends Component {
 
     disable_form(el_form)
       .then(create_and_log(item_model))
-      .then(this.redirect_to_home)
+      .then(() => {
+        this.setState({
+          ...this.state,
+          modal: false
+        });
+      })
       .catch(alert);
   };
 
@@ -96,7 +122,12 @@ class LogNew extends Component {
 
       disable_form(el_form)
         .then(log_the_item(item))
-        .then(this.redirect_to_home)
+        .then(() => {
+          this.setState({
+            ...this.state,
+            modal: false
+          });
+        })
         .catch(alert);
     }
   };
@@ -158,11 +189,20 @@ class LogNew extends Component {
   };
 
   render() {
-    const { items, active_log, score, today_score } = this.props;
-    const { nav, find_options_open, find_query, item_sort, filtered_sorted_items } = this.state;
+    const { active_log, today_log, score, today_score, items } = this.props;
+    const {
+      nav,
+      modal,
+      find_options_open,
+      find_query,
+      item_sort,
+      filtered_sorted_items
+    } = this.state;
     const {
       nav_open_handler,
       nav_close_handler,
+      modal_open_handler,
+      modal_close_handler,
       add_new_submit_handler,
       log_handler,
       find_options_open_handler,
@@ -170,112 +210,144 @@ class LogNew extends Component {
       find_query_input_handler,
       sort_handler
     } = this;
-    const last_logged = active_log ? active_log[active_log.length - 1] : null;
-    const last_logged_name_stat =
-      active_log === null
-        ? {
-            label: 'last logged',
-            value: <span className="loader stat" />,
-            subtitle: null,
-            css_class: 'last_logged'
-          }
-        : last_logged && last_logged.item
-          ? {
-              label: 'last logged',
-              value: last_logged.item.name,
-              subtitle: time_ago(last_logged.date),
-              css_class: 'text_value'
-            }
-          : {
-              label: 'last logged',
-              value: 'none',
-              subtitle: null,
-              css_class: 'text_value'
-            };
-    const last_logged_value_stat =
-      active_log === null
-        ? {
-            label: 'value',
-            value: <span className="loader stat" />,
-            subtitle: null,
-            css_class: ''
-          }
-        : last_logged && last_logged.item
-          ? {
-              label: 'value',
-              value: last_logged.item.value,
-              subtitle: null,
-              css_class: ''
-            }
-          : {
-              label: 'value',
-              value: 'none',
-              subtitle: null,
-              css_class: 'text_value'
-            };
+    const daily_average =
+      active_log && active_log.length === 0
+        ? 'n/a'
+        : active_log === null ? null : get_daily_log_average(active_log);
+    const stats = [
+      {
+        label: 'Home',
+        value:
+          today_score === null ? (
+            <span className="loader stat" />
+          ) : today_score === 0 ? (
+            0
+          ) : today_score > 0 ? (
+            [<i className="material-icons">arrow_upward</i>, today_score]
+          ) : (
+            [<i className="material-icons">arrow_downward</i>, today_score]
+          ),
+        subtitle: null,
+        css_class: 'today_score'
+      },
+      {
+        label: 'daily avg',
+        value:
+          daily_average === null ? (
+            <span className="loader stat" />
+          ) : active_log.length ? (
+            daily_average
+          ) : (
+            'n/a'
+          ),
+        subtitle: null,
+        css_class: ''
+      },
+      {
+        label: 'total',
+        value:
+          score === null ? (
+            <span className="loader stat" />
+          ) : typeof score === 'number' ? (
+            score
+          ) : (
+            'n/a'
+          ),
+        subtitle: null,
+        css_class: 'total_score'
+      }
+    ];
     const table_items = filtered_sorted_items || items;
     const trimmed_cased_query = find_query.trim().toLowerCase();
 
     return (
-      <div id="container" className={`${nav ? 'nav_open' : ''}`}>
+      <div id="container" className={`${nav ? 'nav_open' : ''} ${modal ? 'modal_open' : ''}`}>
         <Header
-          title={'Log Item'}
+          title={'Home'}
           subtitle={format_date_full(Date.now())}
-          stats={[last_logged_name_stat, last_logged_value_stat]}
+          stats={stats}
           nav_open_handler={nav_open_handler}
           el_right_side_anchor={
-            <Link to={'/journal'}>
-              <i className="material-icons">home</i>
+            <Link to={'/journal/overview'}>
+              <i className="material-icons">dashboard</i>
             </Link>
           }
         />
-        <Nav open={nav} active={'log_item'} nav_close_handler={nav_close_handler} />
+        <Nav open={nav} active={'home'} nav_close_handler={nav_close_handler} />
         <div id="overlay" className={nav ? 'visible' : ''} onClick={nav_close_handler} />
-        <div className="row new_item">
-          <span className="section_label">Log New Item</span>
-          <NewItemForm submit_handler={add_new_submit_handler} button_text={'Log New'} />
-        </div>
-        <div className="item_table">
-          <div className={`find_options ${find_options_open ? 'open' : ''}`}>
-            <form
-              className={find_options_open ? 'find_options_toggle open' : 'find_options_toggle'}
-              onSubmit={find_options_open ? find_options_close_handler : find_options_open_handler}
-            >
-              <button className="btn-flat">
-                Options <i className="material-icons">chevron_right</i>
+        <form className="floating_action_button" onSubmit={modal_open_handler}>
+          <button className="btn-floating btn-large waves-light">
+            <i className="material-icons">create</i>
+          </button>
+        </form>
+        <section id="log">
+          {today_log === null ? (
+            <span className="loader" />
+          ) : Array.isArray(today_log) && today_log.length ? (
+            <ActivityLogTable log={today_log} />
+          ) : (
+            <p className="empty_state">no log entries</p>
+          )}
+        </section>
+        <div id="modal" className={modal ? 'open' : 'closed'}>
+          <div id="modal_top">
+            <form id="modal_control" onSubmit={modal_close_handler}>
+              <button>
+                <i className="material-icons">close</i>
               </button>
             </form>
-            <div id="find_options" className={find_options_open ? 'open' : ''}>
-              <form className="find_query_wrapper">
-                <div className="input-field row">
-                  <input
-                    id="find_query"
-                    name="find_query"
-                    type="text"
-                    className="validate"
-                    onInput={find_query_input_handler}
-                  />
-                  <label htmlFor="find_query">Find item</label>
-                </div>
+            <h2 id="modal_title">
+              Home<i className="material-icons">chevron_right</i>New Log Entry
+            </h2>
+          </div>
+          <div className="row new_item">
+            <span className="section_label">Log New Item</span>
+            <NewItemForm submit_handler={add_new_submit_handler} button_text={'Log New'} />
+          </div>
+          <div className="item_table">
+            <div className={`find_options ${find_options_open ? 'open' : ''}`}>
+              <form
+                className={find_options_open ? 'find_options_toggle open' : 'find_options_toggle'}
+                onSubmit={
+                  find_options_open ? find_options_close_handler : find_options_open_handler
+                }
+              >
+                <button className="btn-flat">
+                  Options <i className="material-icons">chevron_right</i>
+                </button>
               </form>
-              <div className="sort_options_wrapper">
-                <span className="section_label">Sort</span>
-                {generate_sort_options(item_sort, sort_handler)}
+              <div id="find_options" className={find_options_open ? 'open' : ''}>
+                <form className="find_query_wrapper">
+                  <div className="input-field row">
+                    <input
+                      id="find_query"
+                      name="find_query"
+                      type="text"
+                      className="validate"
+                      onInput={find_query_input_handler}
+                    />
+                    <label htmlFor="find_query">Find item</label>
+                  </div>
+                </form>
+                <div className="sort_options_wrapper">
+                  <span className="section_label">Sort</span>
+                  {generate_sort_options(item_sort, sort_handler)}
+                </div>
               </div>
             </div>
-          </div>
-          <div id="item_table">
-            {table_items === null ? (
-              <span className="loader" />
-            ) : table_items.length === 0 ? (
-              trimmed_cased_query ? (
-                <p className="empty_state">{`no items matching "${trimmed_cased_query}"`}</p>
+            <div id="item_table">
+              {table_items === null ? (
+                <span className="loader" />
+              ) : table_items.length === 0 ? (
+                trimmed_cased_query ? (
+                  <p className="empty_state">{`no items matching "${trimmed_cased_query}"`}</p>
+                ) : (
+                  <p className="empty_state">no items available</p>
+                )
               ) : (
-                <p className="empty_state">no items available</p>
-              )
-            ) : (
-              <ItemLogTable items={table_items} log_handler={log_handler} />
-            )}
+                <ItemLogTable items={table_items} log_handler={log_handler} />
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -283,7 +355,7 @@ class LogNew extends Component {
   }
 }
 
-export default LogNew;
+export default Home;
 
 // UTILS
 const sort_items = (item_sort, items) => {

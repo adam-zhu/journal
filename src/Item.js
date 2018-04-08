@@ -283,6 +283,11 @@ class Item extends Component {
             <p className="empty_state">no log entries</p>
           )}
         </div>
+        <form className="floating_action_button" onSubmit={log_handler(item)}>
+          <button className="btn-floating btn-large waves-light">
+            <i className="material-icons">create</i>
+          </button>
+        </form>
       </div>
     );
   }

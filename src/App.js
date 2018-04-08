@@ -4,9 +4,8 @@ import materialize from 'materialize-css';
 import './App.css';
 import './loader.css';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import Today from './Today';
+import Home from './Home';
 import Entry from './Entry';
-import LogNew from './LogNew';
 import Items from './Items';
 import Item from './Item';
 import CreateItem from './CreateItem';
@@ -84,7 +83,7 @@ class App extends Component {
             exact
             path={`/journal`}
             render={props => (
-              <Today
+              <Home
                 {...props}
                 db={this.props.db}
                 active_log={this.state.active_log}
@@ -99,20 +98,6 @@ class App extends Component {
             path={`/journal/entries/:entry_id`}
             render={props => (
               <Entry
-                {...props}
-                db={this.props.db}
-                active_log={this.state.active_log}
-                today_log={this.state.today_log}
-                score={this.state.score}
-                today_score={this.state.today_score}
-                items={this.state.items}
-              />
-            )}
-          />
-          <Route
-            path={`/journal/log_item`}
-            render={props => (
-              <LogNew
                 {...props}
                 db={this.props.db}
                 active_log={this.state.active_log}

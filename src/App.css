@@ -16,7 +16,8 @@ body {
   min-height: 100vh;
 }
 
-#container.nav_open {
+#container.nav_open,
+#container.modal_open {
   overflow: hidden;
   position: fixed;
   top: 0;
@@ -30,7 +31,6 @@ body {
 header {
   width: 100%;
   background: #0069c0;
-  padding-top: 0.5rem;
   box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.14), 0 1px 7px 0 rgba(0, 0, 0, 0.12),
     0 3px 1px -1px rgba(0, 0, 0, 0.2);
 }
@@ -41,14 +41,16 @@ header a {
 
 #nav_control {
   display: inline-block;
-  padding-bottom: 0.5rem;
+  vertical-align: middle;
 }
 
 #header_title {
   display: inline-block;
+  vertical-align: middle;
   color: #fafafa;
   font-weight: normal;
   font-size: 1.2rem;
+  line-height: 56px;
   margin: 0;
   max-width: calc(100% - 51px);
 }
@@ -245,6 +247,70 @@ a {
 table .value {
   display: block;
   font-size: 1.4rem;
+}
+
+#modal {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+  background: white;
+  overflow: scroll;
+  opacity: 0;
+  z-index: -1;
+  transition: all 0.15s ease-in-out;
+}
+
+#modal.open {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+  opacity: 1;
+  z-index: 1000;
+}
+
+#modal_top {
+  background: #0069c0;
+  box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.14), 0 1px 7px 0 rgba(0, 0, 0, 0.12),
+    0 3px 1px -1px rgba(0, 0, 0, 0.2);
+}
+
+#modal_control {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#modal_control button {
+  width: 50px;
+  text-align: middle;
+}
+
+#modal_control button i {
+  color: white;
+}
+
+#modal_title {
+  font-size: 1.2rem;
+  display: inline-block;
+  color: white;
+  margin: 0;
+  line-height: 56px;
+  vertical-align: middle;
+}
+
+#modal_title i {
+  font-size: 1.2rem;
+  line-height: 1.1;
+  vertical-align: text-bottom;
+  margin: 0 0.2rem;
+  opacity: 0.8;
 }
 
 #log {
