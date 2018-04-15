@@ -72,6 +72,10 @@ class Overview extends Component {
     // }
   ];
 
+  $CALENDAR_CHART_ID = 'overview_calendar_chart';
+  $LINE_CHART_ID = 'overview_line_chart';
+  $PIE_CHART_ID = 'overview_pie_chart';
+
   nav_open_handler = e => {
     e.preventDefault();
 
@@ -152,11 +156,20 @@ class Overview extends Component {
   }
 
   getSnapshotBeforeUpdate(prevProps, prevState) {
-    return (
-      prevProps.active_log === null ||
-      prevProps.items === null ||
-      prevState.selected_view_option.value !== this.state.selected_view_option.value
-    );
+    const log_changed =
+      (!Array.isArray(prevProps.active_log) && Array.isArray(this.props.active_log)) ||
+      (Array.isArray(prevProps.active_log) &&
+        prevProps.active_log.length !== this.props.active_log.length);
+    const items_changed =
+      (!Array.isArray(prevProps.items) && Array.isArray(this.props.items)) ||
+      (Array.isArray(prevProps.items) && prevProps.items.length !== this.props.items.length);
+    const data_changed = log_changed || items_changed;
+    const view_option_changed =
+      prevState.selected_view_option.value !== this.state.selected_view_option.value;
+
+    return {
+      should_render_charts: data_changed || view_option_changed
+    };
   }
 
   render() {
@@ -170,20 +183,14 @@ class Overview extends Component {
       stats
     } = this.state;
     const {
+      $CALENDAR_CHART_ID,
+      $LINE_CHART_ID,
+      $PIE_CHART_ID,
       nav_open_handler,
       nav_close_handler,
       view_options_dropdown_toggle_handler,
       view_option_select_handler
     } = this;
-    const el_charts = (
-      <div className="charts">
-        {selected_view_option.value === 'all' || selected_view_option.value === 'year' ? (
-          <div id="overview_calendar_chart" className="calendar_chart" />
-        ) : null}
-        <div id="overview_line_chart" className="line_chart" />
-        <div id="overview_pie_chart" className="pie_chart" />
-      </div>
-    );
 
     return (
       <div id="container" className={`${nav ? 'nav_open' : ''}`}>
@@ -219,7 +226,15 @@ class Overview extends Component {
           </div>
         </section>
         <OverviewStats title={stats_title} stats={stats} />
-        {display_log && display_log.length ? el_charts : null}
+        {display_log && display_log.length ? (
+          <div className="charts">
+            {selected_view_option.value === 'all' || selected_view_option.value === 'year' ? (
+              <div id={$CALENDAR_CHART_ID} className="calendar_chart" />
+            ) : null}
+            <div id={$LINE_CHART_ID} className="line_chart" />
+            <div id={$PIE_CHART_ID} className="pie_chart" />
+          </div>
+        ) : null}
         <section id="log">
           {display_log === null ? (
             <span className="loader" />
@@ -233,35 +248,33 @@ class Overview extends Component {
     );
   }
 
-  componentDidUpdate(prevProps, prevState, should_render_charts) {
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    const { should_render_charts } = snapshot;
+
     if (should_render_charts === true) {
+      const { $CALENDAR_CHART_ID, $LINE_CHART_ID, $PIE_CHART_ID } = this;
       const { display_log, selected_view_option } = this.state;
-      const el_calendar_container = document.getElementById('overview_calendar_chart');
-      const el_line_container = document.getElementById('overview_line_chart');
-      const el_pie_container = document.getElementById('overview_pie_chart');
 
       render_charts({
         display_log,
         view_option: selected_view_option,
-        el_calendar_container,
-        el_line_container,
-        el_pie_container
+        el_calendar_container: document.getElementById($CALENDAR_CHART_ID),
+        el_line_container: document.getElementById($LINE_CHART_ID),
+        el_pie_container: document.getElementById($PIE_CHART_ID)
       });
     }
   }
 
   componentDidMount() {
+    const { $CALENDAR_CHART_ID, $LINE_CHART_ID, $PIE_CHART_ID } = this;
     const { display_log, selected_view_option } = this.state;
-    const el_calendar_container = document.getElementById('overview_calendar_chart');
-    const el_line_container = document.getElementById('overview_line_chart');
-    const el_pie_container = document.getElementById('overview_pie_chart');
 
     render_charts({
       display_log,
       view_option: selected_view_option,
-      el_calendar_container,
-      el_line_container,
-      el_pie_container
+      el_calendar_container: document.getElementById($CALENDAR_CHART_ID),
+      el_line_container: document.getElementById($LINE_CHART_ID),
+      el_pie_container: document.getElementById($PIE_CHART_ID)
     });
   }
 }
@@ -629,7 +642,7 @@ const render_charts = ({
   window.google.charts.setOnLoadCallback(() => {
     if (display_log && display_log.length) {
       // calendar chart
-      if (view_option.value === 'all' || view_option.value === 'year') {
+      if (el_calendar_container) {
         const calendar_data = new window.google.visualization.DataTable();
         const calendar_chart = new window.google.visualization.Calendar(el_calendar_container);
         calendar_data.addColumn({ type: 'date', id: 'Date' });
@@ -645,67 +658,71 @@ const render_charts = ({
       }
 
       // line chart
-      const line_data = new window.google.visualization.DataTable();
-      const line_chart = new window.google.charts.Line(el_line_container);
-      const running_totals = display_log.reduce((acc, l) => {
-        let new_row;
+      if (el_line_container) {
+        const line_data = new window.google.visualization.DataTable();
+        const line_chart = new window.google.charts.Line(el_line_container);
+        const running_totals = display_log.reduce((acc, l) => {
+          let new_row;
 
-        if (acc.length > 0) {
-          const prev_row_value = acc[acc.length - 1][1];
-          new_row = [new Date(l.date), l.item.value + prev_row_value];
-        } else {
-          new_row = [new Date(l.date), l.item.value];
-        }
+          if (acc.length > 0) {
+            const prev_row_value = acc[acc.length - 1][1];
+            new_row = [new Date(l.date), l.item.value + prev_row_value];
+          } else {
+            new_row = [new Date(l.date), l.item.value];
+          }
 
-        return acc.concat([new_row]);
-      }, []);
-      line_data.addColumn({ type: 'date', id: 'Time' });
-      line_data.addColumn({ type: 'number', id: 'Score' });
-      running_totals.forEach(rt => line_data.addRow(rt));
-      line_chart.draw(
-        line_data,
-        window.google.charts.Line.convertOptions({
-          width: '100%'
-        })
-      );
+          return acc.concat([new_row]);
+        }, []);
+        line_data.addColumn({ type: 'date', id: 'Time' });
+        line_data.addColumn({ type: 'number', id: 'Score' });
+        running_totals.forEach(rt => line_data.addRow(rt));
+        line_chart.draw(
+          line_data,
+          window.google.charts.Line.convertOptions({
+            width: '100%'
+          })
+        );
+      }
     }
 
     // pie chart
-    const pie_data = new window.google.visualization.DataTable();
-    pie_data.addColumn({ type: 'string', id: 'Name' });
-    pie_data.addColumn({ type: 'number', id: 'Impact' });
-    const pie_chart = new window.google.visualization.PieChart(el_pie_container);
+    if (el_pie_container) {
+      const pie_data = new window.google.visualization.DataTable();
+      pie_data.addColumn({ type: 'string', id: 'Name' });
+      pie_data.addColumn({ type: 'number', id: 'Impact' });
+      const pie_chart = new window.google.visualization.PieChart(el_pie_container);
 
-    if (view_option.value === 'all' && items && items.length) {
-      items.forEach(item => {
-        if (item.logs && item.logs.length) {
-          pie_data.addRow([item.name, item.logs.length * Math.abs(item.value)]);
-        }
-      });
-    } else {
-      const display_log_by_item =
-        display_log && display_log.length
-          ? display_log.reduce(
-              (acc, l) => ({
-                ...acc,
-                [l.item.key]: acc[l.item.key]
-                  ? Object.assign(acc[l.item.key], { log_count: acc[l.item.key].log_count + 1 })
-                  : Object.assign({}, l.item, { log_count: 1 })
-              }),
-              {}
-            )
-          : [];
+      if (view_option.value === 'all' && items && items.length) {
+        items.forEach(item => {
+          if (item.logs && item.logs.length) {
+            pie_data.addRow([item.name, item.logs.length * Math.abs(item.value)]);
+          }
+        });
+      } else {
+        const display_log_by_item =
+          display_log && display_log.length
+            ? display_log.reduce(
+                (acc, l) => ({
+                  ...acc,
+                  [l.item.key]: acc[l.item.key]
+                    ? Object.assign(acc[l.item.key], { log_count: acc[l.item.key].log_count + 1 })
+                    : Object.assign({}, l.item, { log_count: 1 })
+                }),
+                {}
+              )
+            : [];
 
-      Object.keys(display_log_by_item).forEach(k => {
-        const item = display_log_by_item[k];
-        pie_data.addRow([item.name, item.log_count * Math.abs(item.value)]);
+        Object.keys(display_log_by_item).forEach(k => {
+          const item = display_log_by_item[k];
+          pie_data.addRow([item.name, item.log_count * Math.abs(item.value)]);
+        });
+      }
+
+      pie_chart.draw(pie_data, {
+        title: 'Item Impacts',
+        pieHole: 0.4,
+        width: '100%'
       });
     }
-
-    pie_chart.draw(pie_data, {
-      title: 'Item Impacts',
-      pieHole: 0.4,
-      width: '100%'
-    });
   });
 };

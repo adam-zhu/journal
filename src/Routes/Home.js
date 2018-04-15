@@ -43,6 +43,7 @@ class Home extends Component {
 
   reset_modal_form_inputs_DOM = () => {
     const { $MODAL_ID } = this;
+
     document
       .getElementById($MODAL_ID)
       .querySelectorAll('.input-field')

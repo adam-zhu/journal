@@ -22,6 +22,9 @@ body {
   transform: translateZ(0);
   display: block;
 }
+.loader.page {
+  margin: calc(50vh - 10em) auto;
+}
 .loader:before,
 .loader:after {
   position: absolute;

@@ -30,6 +30,9 @@ class Item extends Component {
     };
   }
 
+  $CALENDAR_CHART_ID = 'item_detail_calendar_chart';
+  $PIE_CHART_ID = 'item_detail_pie_chart';
+
   nav_open_handler = e => {
     e.preventDefault();
 
@@ -77,49 +80,9 @@ class Item extends Component {
   };
 
   static getDerivedStateFromProps(nextProps, prevState) {
-    const { match, items, active_log } = nextProps;
+    const { match, items } = nextProps;
     const { item_id } = match.params;
     const item = items === null ? null : items.find(i => i.key === item_id);
-
-    window.google.charts.setOnLoadCallback(() => {
-      const calendar_data = new window.google.visualization.DataTable();
-      calendar_data.addColumn({ type: 'date', id: 'Date' });
-      calendar_data.addColumn({ type: 'number', id: 'Logged' });
-      calendar_data.addRows(
-        item && item.logs && item.logs.length ? map_item_to_calendar_chart_data(item) : []
-      );
-
-      const calendar_chart = new window.google.visualization.Calendar(
-        document.getElementById('item_detail_calendar_chart')
-      );
-      calendar_chart.draw(calendar_data, {
-        calendar: { cellSize: window.innerWidth < 800 ? (window.innerWidth < 500 ? 5.5 : 10) : 14 },
-        width: window.innerWidth < 800 ? (window.innerWidth < 500 ? 320 : 572) : 800,
-        height: window.innerWidth < 800 ? (window.innerWidth < 500 ? 72 : 107) : 145
-      });
-
-      const pie_data = new window.google.visualization.DataTable();
-      pie_data.addColumn({ type: 'string', id: 'Item' });
-      pie_data.addColumn({ type: 'number', id: 'Logged' });
-
-      if (item && active_log) {
-        pie_data.addRow([item.name, item.logs.length * Math.abs(item.value)]);
-        pie_data.addRow([
-          'all other items',
-          active_log.reduce((acc, l) => acc + Math.abs(l.item.value), 0) -
-            item.logs.length * Math.abs(item.value)
-        ]);
-      }
-
-      const pie_chart = new window.google.visualization.PieChart(
-        document.getElementById('item_detail_pie_chart')
-      );
-      pie_chart.draw(pie_data, {
-        title: 'Impact',
-        pieHole: 0.4,
-        width: '100%'
-      });
-    });
 
     return {
       ...prevState,
@@ -127,10 +90,24 @@ class Item extends Component {
     };
   }
 
+  getSnapshotBeforeUpdate(prevProps, prevState) {
+    return {
+      should_render_charts:
+        this.state.item && !prevState.item && Array.isArray(this.props.active_log)
+    };
+  }
+
   render() {
     const { user, log_out_handler, items, active_log, today_log, score, today_score } = this.props;
     const { nav, header_actions_is_open, item } = this.state;
-    const { nav_open_handler, nav_close_handler, header_actions_menu_toggler, log_handler } = this;
+    const {
+      $CALENDAR_CHART_ID,
+      $PIE_CHART_ID,
+      nav_open_handler,
+      nav_close_handler,
+      header_actions_menu_toggler,
+      log_handler
+    } = this;
     const stats = [
       [
         {
@@ -259,8 +236,8 @@ class Item extends Component {
         />
         <div id="overlay" className={nav ? 'visible' : ''} onClick={nav_close_handler} />
         <div className="charts">
-          <div id="item_detail_calendar_chart" className="calendar_chart" />
-          <div id="item_detail_pie_chart" className="pie_chart" />
+          <div id={$CALENDAR_CHART_ID} className="calendar_chart" />
+          <div id={$PIE_CHART_ID} className="pie_chart" />
         </div>
         <div className="item_log">
           {!item ? (
@@ -300,6 +277,81 @@ class Item extends Component {
       </div>
     );
   }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    const { should_render_charts } = snapshot;
+
+    if (should_render_charts === true) {
+      const { $CALENDAR_CHART_ID, $PIE_CHART_ID } = this;
+      const { active_log } = this.props;
+      const { item } = this.state;
+
+      render_charts({
+        item,
+        active_log,
+        el_calendar_container: document.getElementById($CALENDAR_CHART_ID),
+        el_pie_container: document.getElementById($PIE_CHART_ID)
+      });
+    }
+  }
+
+  componentDidMount() {
+    const { $CALENDAR_CHART_ID, $PIE_CHART_ID } = this;
+    const { active_log } = this.props;
+    const { item } = this.state;
+
+    if (active_log && item) {
+      render_charts({
+        item,
+        active_log,
+        el_calendar_container: document.getElementById($CALENDAR_CHART_ID),
+        el_pie_container: document.getElementById($PIE_CHART_ID)
+      });
+    }
+  }
 }
 
 export default Item;
+
+const render_charts = ({ item, active_log, el_calendar_container, el_pie_container }) => {
+  window.google.charts.setOnLoadCallback(() => {
+    // calendar chart
+    const calendar_data = new window.google.visualization.DataTable();
+
+    calendar_data.addColumn({ type: 'date', id: 'Date' });
+    calendar_data.addColumn({ type: 'number', id: 'Logged' });
+    calendar_data.addRows(
+      item && item.logs && item.logs.length ? map_item_to_calendar_chart_data(item) : []
+    );
+
+    const calendar_chart = new window.google.visualization.Calendar(el_calendar_container);
+
+    calendar_chart.draw(calendar_data, {
+      calendar: {
+        cellSize: window.innerWidth < 800 ? (window.innerWidth < 500 ? 5.5 : 10) : 14
+      },
+      width: window.innerWidth < 800 ? (window.innerWidth < 500 ? 320 : 572) : 800,
+      height: window.innerWidth < 800 ? (window.innerWidth < 500 ? 72 : 107) : 145
+    });
+
+    // pie chart
+    const pie_data = new window.google.visualization.DataTable();
+
+    pie_data.addColumn({ type: 'string', id: 'Item' });
+    pie_data.addColumn({ type: 'number', id: 'Logged' });
+
+    const total_item_score = item.logs.length * Math.abs(item.value);
+    const total_log_score = active_log.reduce((acc, l) => acc + Math.abs(l.item.value), 0);
+
+    pie_data.addRow([item.name, total_item_score]);
+    pie_data.addRow(['all other items', total_log_score - total_item_score]);
+
+    const pie_chart = new window.google.visualization.PieChart(el_pie_container);
+
+    pie_chart.draw(pie_data, {
+      title: 'Impact',
+      pieHole: 0.4,
+      width: '100%'
+    });
+  });
+};
