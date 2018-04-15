@@ -6,6 +6,26 @@ body {
   -webkit-overflow-scrolling: touch;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+#log_in form {
+  padding: 2rem;
+  box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.14), 0 1px 7px 0 rgba(0, 0, 0, 0.12),
+    0 3px 1px -1px rgba(0, 0, 0, 0.2);
+  background: white;
+  max-width: 270px;
+  width: 66%;
+  position: absolute;
+  top: 10rem;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: right;
+}
+
+#log_in form p {
+  text-align: left;
 }
 
 #container {
@@ -205,15 +225,74 @@ nav.open {
 nav ul li {
   display: block;
   width: 100%;
+  float: none;
 }
 
-nav ul li a i {
+nav ul li.nav_item a i {
   display: inline-block !important;
   font-size: 1.4rem !important;
   height: auto !important;
   line-height: 1 !important;
   vertical-align: text-top;
   margin-right: 1rem;
+}
+
+nav .user {
+  line-height: normal;
+  height: calc(100vh - 56px - 56px - 56px);
+  position: relative;
+}
+nav .user_meta {
+  padding: 1.25rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 66.6%;
+  overflow: hidden;
+}
+nav .user .avatar {
+  height: 30px;
+  width: 30px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0;
+}
+
+nav .user .text_meta {
+  display: inline-block;
+  width: calc(100% - 30px - 1rem);
+  vertical-align: middle;
+  margin-left: 1rem;
+}
+
+nav .user .text_meta span {
+  display: block;
+  line-height: 1.4;
+  font-size: 1rem;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+nav .user .text_meta .email {
+  font-size: 0.8rem;
+}
+
+nav .cta.log_out {
+  padding: 1rem 0;
+  width: 100%;
+  text-align: right;
+}
+
+nav .cta.log_out button {
+  color: white;
 }
 
 #overlay {
@@ -290,6 +369,8 @@ table .value {
 #modal_control button {
   width: 50px;
   text-align: middle;
+  background: transparent;
+  border: none;
 }
 
 #modal_control button i {

@@ -5,6 +5,7 @@ import NewItemForm from './NewItemForm';
 import ItemTable from './ItemTable';
 import { disable_form } from './util.js';
 import { Link } from 'react-router-dom';
+import { create_item, add_entry_for_item } from './db_actions';
 import {
   time_ago,
   format_date_full,
@@ -29,9 +30,26 @@ class Items extends Component {
       find_options_open: true,
       find_query: '',
       item_sort: null,
-      filtered_sorted_items: null
+      filtered_sorted_items: null,
+      modal: false
     };
   }
+
+  $MODAL_ID = 'modal';
+
+  reset_modal_form_inputs_DOM = () => {
+    const { $MODAL_ID } = this;
+    document
+      .getElementById($MODAL_ID)
+      .querySelectorAll('.input-field')
+      .forEach(el => {
+        const el_input = el.querySelector('input');
+        const el_label = el.querySelector('label');
+
+        el_input.value = '';
+        el_label.classList.remove('active');
+      });
+  };
 
   nav_open_handler = e => {
     e.preventDefault();
@@ -48,6 +66,27 @@ class Items extends Component {
     this.setState({
       ...this.state,
       nav: false
+    });
+  };
+
+  modal_open_handler = e => {
+    e.preventDefault();
+
+    // hack
+    this.reset_modal_form_inputs_DOM();
+
+    this.setState({
+      ...this.state,
+      modal: true
+    });
+  };
+
+  modal_close_handler = e => {
+    e.preventDefault();
+
+    this.setState({
+      ...this.state,
+      modal: false
     });
   };
 
@@ -107,41 +146,109 @@ class Items extends Component {
     });
   };
 
+  log_handler = item => e => {
+    const el_form = e.target;
+
+    e.preventDefault();
+
+    if (window.confirm(`Log ${item.name} for ${item.value}?`)) {
+      const { db, user } = this.props;
+      const log_the_item = add_entry_for_item({ db, uid: user.uid });
+      const redirect_to_home = () => this.props.history.push('/journal');
+
+      disable_form(el_form)
+        .then(log_the_item(item))
+        .then(redirect_to_home)
+        .catch(alert);
+    }
+  };
+
+  add_new_submit_handler = e => {
+    const el_form = e.target;
+    const name = el_form.name.value.trim();
+    const value = Number(el_form.value.value);
+    const active = true;
+    const created_date = Date.now();
+    const model = {
+      name,
+      value,
+      active,
+      created_date
+    };
+
+    e.preventDefault();
+
+    if (!name) {
+      return alert('Item cannot be blank');
+    }
+
+    if (isNaN(value) || value === 0) {
+      return alert('Value must be a nonzero number');
+    }
+
+    const { db, user } = this.props;
+    const create_the_item = create_item({ db, uid: user.uid });
+
+    disable_form(el_form)
+      .then(create_the_item(model))
+      .then(() => {
+        this.setState({
+          modal: false
+        });
+      })
+      .catch(alert);
+  };
+
   render() {
-    const { items, active_log, score, today_score } = this.props;
-    const { nav, find_options_open, find_query, item_sort, filtered_sorted_items } = this.state;
+    const { user, log_out_handler, items, active_log, score, today_score } = this.props;
     const {
+      nav,
+      find_options_open,
+      find_query,
+      item_sort,
+      filtered_sorted_items,
+      modal
+    } = this.state;
+    const {
+      $MODAL_ID,
       nav_open_handler,
       nav_close_handler,
+      modal_open_handler,
+      modal_close_handler,
       find_options_open_handler,
       find_options_close_handler,
       find_query_input_handler,
-      sort_handler
+      sort_handler,
+      log_handler,
+      add_new_submit_handler
     } = this;
-    const stats = [
-      {
-        label: 'total items',
-        value: items ? items.length : <span className="loader stat" />,
-        subtitle: null,
-        css_class: 'total_score'
-      }
-    ];
+    const total_items_stat = {
+      label: 'total items',
+      value: items ? items.length : <span className="loader stat" />,
+      css_class: 'total_score'
+    };
     const table_items = filtered_sorted_items || items;
     const trimmed_cased_query = find_query.trim().toLowerCase();
 
     return (
-      <div id="container" className={`${nav ? 'nav_open' : ''}`}>
+      <div id="container" className={`${nav ? 'nav_open' : ''} ${modal ? 'modal_open' : ''}`}>
         <Header
           title={'Items'}
-          stats={stats}
+          stats={[total_items_stat]}
           nav_open_handler={nav_open_handler}
           el_right_side_anchor={
-            <Link to={'/journal/create_item'}>
-              <i className="material-icons">playlist_add</i>
+            <Link to={'/journal/overview'}>
+              <i className="material-icons">dashboard</i>
             </Link>
           }
         />
-        <Nav open={nav} active={'items'} nav_close_handler={nav_close_handler} />
+        <Nav
+          user={user}
+          log_out_handler={log_out_handler}
+          open={nav}
+          active={'items'}
+          nav_close_handler={nav_close_handler}
+        />
         <div id="overlay" className={nav ? 'visible' : ''} onClick={nav_close_handler} />
         <div className="items">
           <div className={`find_options ${find_options_open ? 'open' : ''}`}>
@@ -182,18 +289,31 @@ class Items extends Component {
                 <p className="empty_state">no items available</p>
               )
             ) : (
-              <ItemTable items={table_items} />
+              <ItemTable items={table_items} log_handler={log_handler} />
             )}
           </div>
-          <Link
-            id="create_item_button"
-            className="floating_action_button"
-            to={'/journal/create_item'}
-          >
+          <form className="floating_action_button" onSubmit={modal_open_handler}>
             <button className="btn-floating btn-large waves-light">
               <i className="material-icons">playlist_add</i>
             </button>
-          </Link>
+          </form>
+        </div>
+
+        <div id={$MODAL_ID} className={modal ? 'open' : 'closed'}>
+          <div id="modal_top">
+            <form id="modal_control" onSubmit={modal_close_handler}>
+              <button>
+                <i className="material-icons">close</i>
+              </button>
+            </form>
+            <h2 id="modal_title">
+              Items<i className="material-icons">chevron_right</i>New Item
+            </h2>
+          </div>
+          <div className="row new_item">
+            <span className="section_label">Create New Item</span>
+            <NewItemForm submit_handler={add_new_submit_handler} button_text={'Create'} />
+          </div>
         </div>
       </div>
     );

@@ -162,7 +162,7 @@ class Overview extends Component {
   }
 
   render() {
-    const { active_log, score, today_score } = this.props;
+    const { user, log_out_handler, active_log, score, today_score } = this.props;
     const {
       nav,
       selected_view_option,
@@ -200,7 +200,13 @@ class Overview extends Component {
             </Link>
           }
         />
-        <Nav open={nav} active={'overview'} nav_close_handler={nav_close_handler} />
+        <Nav
+          user={user}
+          log_out_handler={log_out_handler}
+          open={nav}
+          active={'overview'}
+          nav_close_handler={nav_close_handler}
+        />
         <div id="overlay" className={nav ? 'visible' : ''} onClick={nav_close_handler} />
         <section id="overview_config">
           <div className="inner">
@@ -383,7 +389,7 @@ const resolve_display_log = ({ selected_view_option, start_date, end_date, activ
 };
 
 const all_stats = ({ all_log }) => {
-  if (!all_log) {
+  if (!all_log || !all_log.length) {
     return { stats_title: null, stats: null };
   }
 

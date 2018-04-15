@@ -8,9 +8,9 @@ import Home from './Home';
 import Entry from './Entry';
 import Items from './Items';
 import Item from './Item';
-import CreateItem from './CreateItem';
 import Overview from './Overview';
 import { extract_items_from_snapshot, extract_day } from './util';
+import firebase, { auth, provider } from './firebase.js';
 
 class App extends Component {
   constructor(props) {
@@ -18,65 +18,95 @@ class App extends Component {
 
     this.state = {
       items: null,
+      active_items: null,
       log: null,
       active_log: null,
       today_log: null,
       score: null,
-      today_score: null
+      today_score: null,
+      user: null
     };
-
-    // load initial data and set up change listeners
-    this.props.db.ref('items').on('value', snapshot => {
-      const all_items = extract_items_from_snapshot(snapshot).reverse();
-      const score = this.state.log
-        ? this.state.log.reduce((acc, l) => acc + l.item.value, 0)
-        : null;
-      const today_log = this.state.log ? extract_day(Date.now(), this.state.log) : null;
-      const today_score = this.state.today_log
-        ? this.state.today_log.reduce((acc, l) => acc + l.item.value, 0)
-        : null;
-
-      this.setState({
-        ...this.state,
-        items: all_items.filter(i => i.active).map(i => ({
-          ...i,
-          logs: this.state.active_log
-            ? this.state.active_log.filter(l => l.item && l.item.key === i.key)
-            : []
-        })),
-        score,
-        today_score,
-        today_log
-      });
-    });
-
-    this.props.db.ref('log').on('value', snapshot => {
-      const log = extract_items_from_snapshot(snapshot);
-      const active_log = log ? log.filter(l => l.active !== false) : null;
-      const score = active_log ? active_log.reduce((acc, l) => acc + l.item.value, 0) : null;
-      const today_log = active_log ? extract_day(Date.now(), active_log) : null;
-      const today_score = today_log ? today_log.reduce((acc, l) => acc + l.item.value, 0) : null;
-
-      this.setState({
-        ...this.state,
-        items:
-          this.state.items === null
-            ? null
-            : this.state.items.map(i => ({
-                ...i,
-                logs: active_log.filter(l => l.item && l.item.key === i.key)
-              })),
-        log,
-        active_log,
-        today_log,
-        score,
-        today_score
-      });
-    });
   }
 
+  db = firebase.database();
+
+  log_in_handler = e => {
+    e.preventDefault();
+
+    auth.signInWithPopup(provider).then(result => {
+      const user = result.user;
+      const get_log = () =>
+        new Promise((resolve, reject) =>
+          this.db
+            .ref(`${user.uid}/log`)
+            .once('value', snapshot => resolve(extract_items_from_snapshot(snapshot)))
+        );
+      this.setState({
+        user
+      });
+
+      this.db.ref(`${user.uid}/items`).on('value', snapshot => {
+        const items = extract_items_from_snapshot(snapshot);
+        const active_items = items.filter(i => i.active !== false);
+        const active_sorted_items = active_items.reverse();
+
+        get_log()
+          .then(log => {
+            const active_log = log.filter(l => l.active !== false);
+            const formatted_items = active_sorted_items.map(i => ({
+              ...i,
+              logs: active_log ? active_log.filter(l => l.item && l.item.key === i.key) : []
+            }));
+
+            this.setState({
+              items: formatted_items
+            });
+          })
+          .catch(alert);
+      });
+
+      this.db.ref(`${user.uid}/log`).on('value', snapshot => {
+        const log = extract_items_from_snapshot(snapshot);
+        const active_log = log.filter(l => l.active !== false);
+        const score = active_log.reduce((acc, l) => acc + l.item.value, 0);
+        const today_log = extract_day(Date.now(), active_log);
+        const today_score = today_log.reduce((acc, l) => acc + l.item.value, 0);
+        const items = this.state.items;
+        const formatted_items = items
+          ? items.map(i => ({
+              ...i,
+              logs: active_log.filter(l => l.item && l.item.key === i.key)
+            }))
+          : items;
+
+        this.setState({
+          items: formatted_items,
+          log,
+          active_log,
+          today_log,
+          score,
+          today_score
+        });
+      });
+    });
+  };
+
+  log_out_handler = e => {
+    e.preventDefault();
+    auth.signOut().then(() => this.setState({ user: null }));
+  };
+
   render() {
-    return (
+    return this.state.user === null ? (
+      <div id="container">
+        <div id="log_in">
+          <form onSubmit={this.log_in_handler}>
+            <p>Sign in with your Google account.</p>
+            <button className="btn blue">SIGN IN</button>
+          </form>
+        </div>
+      </div>
+    ) : (
       <Router>
         <Switch>
           <Route
@@ -85,7 +115,9 @@ class App extends Component {
             render={props => (
               <Home
                 {...props}
-                db={this.props.db}
+                db={this.db}
+                user={this.state.user}
+                log_out_handler={this.log_out_handler}
                 active_log={this.state.active_log}
                 today_log={this.state.today_log}
                 score={this.state.score}
@@ -99,7 +131,9 @@ class App extends Component {
             render={props => (
               <Entry
                 {...props}
-                db={this.props.db}
+                db={this.db}
+                user={this.state.user}
+                log_out_handler={this.log_out_handler}
                 active_log={this.state.active_log}
                 today_log={this.state.today_log}
                 score={this.state.score}
@@ -114,7 +148,9 @@ class App extends Component {
             render={props => (
               <Items
                 {...props}
-                db={this.props.db}
+                db={this.db}
+                user={this.state.user}
+                log_out_handler={this.log_out_handler}
                 active_log={this.state.active_log}
                 today_log={this.state.today_log}
                 score={this.state.score}
@@ -128,22 +164,9 @@ class App extends Component {
             render={props => (
               <Item
                 {...props}
-                db={this.props.db}
-                active_log={this.state.active_log}
-                today_log={this.state.today_log}
-                score={this.state.score}
-                today_score={this.state.today_score}
-                items={this.state.items}
-              />
-            )}
-          />
-          <Route
-            exact
-            path={`/journal/create_item`}
-            render={props => (
-              <CreateItem
-                {...props}
-                db={this.props.db}
+                db={this.db}
+                user={this.state.user}
+                log_out_handler={this.log_out_handler}
                 active_log={this.state.active_log}
                 today_log={this.state.today_log}
                 score={this.state.score}
@@ -158,7 +181,9 @@ class App extends Component {
             render={props => (
               <Overview
                 {...props}
-                db={this.props.db}
+                db={this.db}
+                user={this.state.user}
+                log_out_handler={this.log_out_handler}
                 active_log={this.state.active_log}
                 today_log={this.state.today_log}
                 score={this.state.score}
@@ -174,3 +199,19 @@ class App extends Component {
 }
 
 export default App;
+
+const isUserEqual = (googleUser, firebaseUser) => {
+  if (firebaseUser) {
+    var providerData = firebaseUser.providerData;
+    for (var i = 0; i < providerData.length; i++) {
+      if (
+        providerData[i].providerId === firebase.auth.GoogleAuthProvider.PROVIDER_ID &&
+        providerData[i].uid === googleUser.getBasicProfile().getId()
+      ) {
+        // We don't need to reauth the Firebase connection.
+        return true;
+      }
+    }
+  }
+  return false;
+};

@@ -63,7 +63,8 @@ class Item extends Component {
     e.preventDefault();
 
     if (window.confirm(`Log ${item.name} for ${item.value}?`)) {
-      const log_the_item = add_entry_for_item(this.props.db);
+      const { db, user } = this.props;
+      const log_the_item = add_entry_for_item({ db, uid: user.uid });
       const redirect_to_home = () => this.props.history.push('/journal');
 
       disable_form(el_form)
@@ -125,7 +126,7 @@ class Item extends Component {
   }
 
   render() {
-    const { items, active_log, today_log, score, today_score } = this.props;
+    const { user, log_out_handler, items, active_log, today_log, score, today_score } = this.props;
     const { nav, header_actions_is_open, item } = this.state;
     const { nav_open_handler, nav_close_handler, header_actions_menu_toggler, log_handler } = this;
     const stats = [
@@ -247,14 +248,20 @@ class Item extends Component {
           }
           actions={header_actions}
         />
-        <Nav open={nav} active={'items'} nav_close_handler={nav_close_handler} />
+        <Nav
+          user={user}
+          log_out_handler={log_out_handler}
+          open={nav}
+          active={'items'}
+          nav_close_handler={nav_close_handler}
+        />
         <div id="overlay" className={nav ? 'visible' : ''} onClick={nav_close_handler} />
         <div className="charts">
           <div id="item_detail_calendar_chart" className="calendar_chart" />
           <div id="item_detail_pie_chart" className="pie_chart" />
         </div>
         <div className="item_log">
-          {item === null ? (
+          {!item ? (
             <span className="loader" />
           ) : item.logs && item.logs.length ? (
             <table>

@@ -1,13 +1,13 @@
-import React from "react";
+import React from 'react';
 
 const NewItemForm = ({ submit_handler, button_text }) => (
   <form className="add_new" onSubmit={submit_handler}>
     <div className="input-field col s8">
-      <input id="name" type="text" className="validate" />
+      <input id="name" type="text" />
       <label htmlFor="name">Item</label>
     </div>
     <div className="input-field value col s4">
-      <input id="value" type="text" className="validate" />
+      <input id="value" type="text" />
       <label htmlFor="value">Value</label>
     </div>
     <div className="cta col s12">

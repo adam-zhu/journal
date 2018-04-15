@@ -37,6 +37,22 @@ class Home extends Component {
     };
   }
 
+  $MODAL_ID = 'modal';
+
+  reset_modal_form_inputs_DOM = () => {
+    const { $MODAL_ID } = this;
+    document
+      .getElementById($MODAL_ID)
+      .querySelectorAll('.input-field')
+      .forEach(el => {
+        const el_input = el.querySelector('input');
+        const el_label = el.querySelector('label');
+
+        el_input.value = '';
+        el_label.classList.remove('active');
+      });
+  };
+
   nav_open_handler = e => {
     e.preventDefault();
 
@@ -59,11 +75,15 @@ class Home extends Component {
     e.preventDefault();
 
     // hack
-    document.getElementById('modal').scrollTop = 0;
+    this.reset_modal_form_inputs_DOM();
 
     this.setState({
       ...this.state,
-      modal: true
+      modal: true,
+      item_sort: null,
+      find_options_open: false,
+      find_query: '',
+      filtered_sorted_items: this.props.items
     });
   };
 
@@ -99,7 +119,8 @@ class Home extends Component {
       active,
       created_date
     };
-    const create_and_log = create_item_and_add_entry(this.props.db);
+    const { db, user } = this.props;
+    const create_and_log = create_item_and_add_entry({ db, uid: user.uid });
 
     disable_form(el_form)
       .then(create_and_log(item_model))
@@ -118,7 +139,8 @@ class Home extends Component {
     e.preventDefault();
 
     if (window.confirm(`Log ${item.name} for ${item.value}?`)) {
-      const log_the_item = add_entry_for_item(this.props.db);
+      const { db, user } = this.props;
+      const log_the_item = add_entry_for_item({ db, uid: user.uid });
 
       disable_form(el_form)
         .then(log_the_item(item))
@@ -189,7 +211,7 @@ class Home extends Component {
   };
 
   render() {
-    const { active_log, today_log, score, today_score, items } = this.props;
+    const { user, log_out_handler, active_log, today_log, score, today_score, items } = this.props;
     const {
       nav,
       modal,
@@ -199,6 +221,7 @@ class Home extends Component {
       filtered_sorted_items
     } = this.state;
     const {
+      $MODAL_ID,
       nav_open_handler,
       nav_close_handler,
       modal_open_handler,
@@ -273,7 +296,13 @@ class Home extends Component {
             </Link>
           }
         />
-        <Nav open={nav} active={'home'} nav_close_handler={nav_close_handler} />
+        <Nav
+          user={user}
+          log_out_handler={log_out_handler}
+          open={nav}
+          active={'home'}
+          nav_close_handler={nav_close_handler}
+        />
         <div id="overlay" className={nav ? 'visible' : ''} onClick={nav_close_handler} />
         <form className="floating_action_button" onSubmit={modal_open_handler}>
           <button className="btn-floating btn-large waves-light">
@@ -289,7 +318,7 @@ class Home extends Component {
             <p className="empty_state">no log entries</p>
           )}
         </section>
-        <div id="modal" className={modal ? 'open' : 'closed'}>
+        <div id={$MODAL_ID} className={modal ? 'open' : 'closed'}>
           <div id="modal_top">
             <form id="modal_control" onSubmit={modal_close_handler}>
               <button>
@@ -323,7 +352,6 @@ class Home extends Component {
                       id="find_query"
                       name="find_query"
                       type="text"
-                      className="validate"
                       onInput={find_query_input_handler}
                     />
                     <label htmlFor="find_query">Find item</label>

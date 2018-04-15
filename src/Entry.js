@@ -61,7 +61,8 @@ class Entry extends Component {
     e.preventDefault();
 
     if (window.confirm(`Delete this entry?`)) {
-      const deactivate = deactivate_entry(this.props.db);
+      const { db, user } = this.props;
+      const deactivate = deactivate_entry({ db, uid: user.uid });
       const redirect_to_home = () => this.props.history.push('/journal');
       disable_form(el_form)
         .then(deactivate(entry.key))
@@ -82,6 +83,7 @@ class Entry extends Component {
   }
 
   render() {
+    const { user, log_out_handler } = this.props;
     const { nav, entry, header_actions_is_open } = this.state;
     const {
       nav_open_handler,
@@ -155,7 +157,13 @@ class Entry extends Component {
           }
           actions={header_actions}
         />
-        <Nav open={nav} active={'home'} nav_close_handler={nav_close_handler} />
+        <Nav
+          user={user}
+          log_out_handler={log_out_handler}
+          open={nav}
+          active={'home'}
+          nav_close_handler={nav_close_handler}
+        />
         <div id="overlay" className={nav ? 'visible' : ''} onClick={nav_close_handler} />
         {entry ? (
           <div className="entry_details">
@@ -181,11 +189,6 @@ class Entry extends Component {
                 {format_time_of_day(entry.date)}
               </li>
             </ul>
-            {/* <form onSubmit={deactivate_handler(entry)} className="floating_action_button">
-              <button className="btn-floating btn-large waves-light">
-                <i className="material-icons">delete</i>
-              </button>
-            </form> */}
           </div>
         ) : null}
       </div>
