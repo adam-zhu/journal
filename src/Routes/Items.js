@@ -348,20 +348,17 @@ const generate_sort_options = (item_sort, sort_handler) => {
   let name = {
     css_class: 'chip name',
     on_submit: sort_handler('name asc'),
-    text: 'Name',
-    icon: ''
+    text: 'Name'
   };
   let value = {
     css_class: 'chip value',
     on_submit: sort_handler('value asc'),
-    text: 'Value',
-    icon: ''
+    text: 'Value'
   };
   let last_logged = {
     css_class: 'chip last_logged',
     on_submit: sort_handler('last_logged asc'),
-    text: 'Last Logged',
-    icon: ''
+    text: 'Last Logged'
   };
   const sort_options = [name, value, last_logged];
 
@@ -400,15 +397,13 @@ const generate_sort_options = (item_sort, sort_handler) => {
       break;
   }
 
-  const generate_option_markup = (sort_option, i) => (
-    <li className={sort_option.css_class} onClick={sort_option.on_submit} key={i}>
-      {sort_option.text}
-      {sort_option.icon}
-    </li>
+  return (
+    <ul className={item_sort ? `sort_options ${item_sort}` : 'sort_options'}>
+      {sort_options.map((o, i) => (
+        <li className={o.css_class} onClick={o.on_submit} key={i}>
+          {o.text}
+        </li>
+      ))}
+    </ul>
   );
-  const wrap = options => (
-    <ul className={item_sort ? `sort_options ${item_sort}` : 'sort_options'}>{options}</ul>
-  );
-
-  return wrap(sort_options.map(generate_option_markup));
 };
