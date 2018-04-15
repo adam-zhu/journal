@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
-import Header from './Header';
-import Nav from './Nav';
 import { Link } from 'react-router-dom';
-import { deactivate_entry } from './db_actions';
+import { deactivate_entry } from '../Helpers/db_actions';
 import {
   time_ago,
   format_date_full,
@@ -11,7 +9,11 @@ import {
   get_daily_item_average,
   map_to_calendar_chart_data,
   scroll_viewport_to_top
-} from './util';
+} from '../Helpers/util';
+import async_wrapper from '../Helpers/AsyncWrapper';
+const el_loading = <span className="loader" />;
+const Header = async_wrapper(() => import('../Components/Header'), el_loading);
+const Nav = async_wrapper(() => import('../Components/Nav'), el_loading);
 
 class Entry extends Component {
   constructor(props) {

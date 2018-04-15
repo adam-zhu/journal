@@ -1,6 +1,6 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { time_ago } from "./util";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { time_ago } from '../Helpers/util';
 
 const ItemLogTable = ({ items, log_handler, delete_handler }) => {
   return (
@@ -14,7 +14,7 @@ const ItemLogTable = ({ items, log_handler, delete_handler }) => {
                   {item.name}
                   <strong
                     title={`value: ${item.value}`}
-                    className={item.value < 0 ? "negative value" : "positive value"}
+                    className={item.value < 0 ? 'negative value' : 'positive value'}
                   >
                     {item.value}
                   </strong>

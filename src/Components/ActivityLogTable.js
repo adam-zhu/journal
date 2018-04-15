@@ -1,6 +1,6 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { time_ago } from "./util";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { time_ago } from '../Helpers/util';
 
 const ActivityLogTable = ({ log }) => (
   <table>
@@ -17,7 +17,9 @@ const ActivityLogTable = ({ log }) => (
               </Link>
             </td>
             <td>
-              <span className={l.item.value < 0 ? "value negative" : "value positive"}>{l.item.value}</span>
+              <span className={l.item.value < 0 ? 'value negative' : 'value positive'}>
+                {l.item.value}
+              </span>
             </td>
           </tr>
         ))}

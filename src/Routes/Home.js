@@ -1,10 +1,5 @@
 import React, { Component } from 'react';
-import Header from './Header';
-import Nav from './Nav';
-import ActivityLogTable from './ActivityLogTable';
-import NewItemForm from './NewItemForm';
-import ItemLogTable from './ItemLogTable';
-import { add_entry_for_item, create_item_and_add_entry } from './db_actions';
+import { add_entry_for_item, create_item_and_add_entry } from '../Helpers/db_actions';
 import { Link } from 'react-router-dom';
 import {
   time_ago,
@@ -19,7 +14,14 @@ import {
   by_created_date_desc,
   by_last_logged_date_asc,
   by_last_logged_date_desc
-} from './util';
+} from '../Helpers/util';
+import async_wrapper from '../Helpers/AsyncWrapper';
+const el_loading = <span className="loader" />;
+const Header = async_wrapper(() => import('../Components/Header'), el_loading);
+const Nav = async_wrapper(() => import('../Components/Nav'), el_loading);
+const ActivityLogTable = async_wrapper(() => import('../Components/ActivityLogTable'), el_loading);
+const NewItemForm = async_wrapper(() => import('../Components/NewItemForm'), el_loading);
+const ItemLogTable = async_wrapper(() => import('../Components/ItemLogTable'), el_loading);
 
 class Home extends Component {
   constructor(props) {

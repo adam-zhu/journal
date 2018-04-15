@@ -1,5 +1,5 @@
 import React from 'react';
-import HandleExteriorClickWrapper from './HandleExteriorClickWrapper';
+import HandleExteriorClickWrapper from '../Helpers/HandleExteriorClickWrapper';
 
 const Header = ({ title, subtitle, nav_open_handler, stats, actions, el_right_side_anchor }) => {
   // support passing arrays of stats intended to be grouped together

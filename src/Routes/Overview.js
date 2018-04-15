@@ -1,8 +1,4 @@
 import React, { Component } from 'react';
-import Header from './Header';
-import Nav from './Nav';
-import ActivityLogTable from './ActivityLogTable';
-import HandleExteriorClickWrapper from './HandleExteriorClickWrapper';
 import './Overview.css';
 import { Link } from 'react-router-dom';
 import {
@@ -20,7 +16,13 @@ import {
   extract_this_year,
   extract_range,
   map_log_to_calendar_chart_data
-} from './util';
+} from '../Helpers/util';
+import HandleExteriorClickWrapper from '../Helpers/HandleExteriorClickWrapper';
+import async_wrapper from '../Helpers/AsyncWrapper';
+const el_loading = <span className="loader" />;
+const Header = async_wrapper(() => import('../Components/Header'), el_loading);
+const Nav = async_wrapper(() => import('../Components/Nav'), el_loading);
+const ActivityLogTable = async_wrapper(() => import('../Components/ActivityLogTable'), el_loading);
 
 class Overview extends Component {
   constructor(props) {
@@ -63,11 +65,11 @@ class Overview extends Component {
     {
       value: 'year',
       display_text: 'Year'
-    },
-    {
-      value: 'range',
-      display_text: 'Date Range'
     }
+    // {
+    //   value: 'range',
+    //   display_text: 'Date Range'
+    // }
   ];
 
   nav_open_handler = e => {
@@ -150,15 +152,11 @@ class Overview extends Component {
   }
 
   getSnapshotBeforeUpdate(prevProps, prevState) {
-    if (
+    return (
       prevProps.active_log === null ||
       prevProps.items === null ||
       prevState.selected_view_option.value !== this.state.selected_view_option.value
-    ) {
-      return true;
-    }
-
-    return null;
+    );
   }
 
   render() {

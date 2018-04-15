@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { time_ago } from './util';
+import { time_ago } from '../Helpers/util';
 
 const ItemTable = ({ items, log_handler }) => {
   return (

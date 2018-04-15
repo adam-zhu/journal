@@ -1,12 +1,8 @@
 import React, { Component } from 'react';
-import Header from './Header';
-import Nav from './Nav';
-import NewItemForm from './NewItemForm';
-import ItemTable from './ItemTable';
-import { disable_form } from './util.js';
 import { Link } from 'react-router-dom';
-import { create_item, add_entry_for_item } from './db_actions';
+import { create_item, add_entry_for_item } from '../Helpers/db_actions';
 import {
+  disable_form,
   time_ago,
   format_date_full,
   by_name_asc,
@@ -17,7 +13,14 @@ import {
   by_last_logged_date_asc,
   by_last_logged_date_desc,
   scroll_viewport_to_top
-} from './util';
+} from '../Helpers/util';
+import async_wrapper from '../Helpers/AsyncWrapper';
+const el_loading = <span className="loader" />;
+const Header = async_wrapper(() => import('../Components/Header'), el_loading);
+const Nav = async_wrapper(() => import('../Components/Nav'), el_loading);
+const ActivityLogTable = async_wrapper(() => import('../Components/ActivityLogTable'), el_loading);
+const NewItemForm = async_wrapper(() => import('../Components/NewItemForm'), el_loading);
+const ItemTable = async_wrapper(() => import('../Components/ItemTable'), el_loading);
 
 class Items extends Component {
   constructor(props) {
